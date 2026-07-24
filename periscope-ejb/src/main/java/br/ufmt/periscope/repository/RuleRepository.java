@@ -1,22 +1,23 @@
 package br.ufmt.periscope.repository;
 
+import br.ufmt.periscope.model.Applicant;
+import br.ufmt.periscope.model.History;
+import br.ufmt.periscope.model.Inventor;
 import br.ufmt.periscope.model.Patent;
-import java.util.List;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-
-import org.bson.types.ObjectId;
-
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.Rule;
 import br.ufmt.periscope.model.RuleType;
-
-import com.github.jmkgreen.morphia.Datastore;
-import com.github.jmkgreen.morphia.Key;
-import com.github.jmkgreen.morphia.query.Query;
-import com.mongodb.DB;
+import dev.morphia.Datastore;
+import dev.morphia.query.FindOptions;
+import dev.morphia.query.Query;
+import dev.morphia.query.Sort;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import java.util.List;
 import java.util.Map;
+import org.bson.types.ObjectId;
+
+import static dev.morphia.query.filters.Filters.eq;
 
 @Named
 public class RuleRepository {
@@ -28,145 +29,198 @@ public class RuleRepository {
     Project currentProject;
     private Integer searchType = null;
 
-    public List<Rule> load(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters) {
+    public List<Rule> load(int first, int pageSize, String sortField, int sortOrder,
+            Map<String, String> filters) {
 
-        Query query;
+        Query<Rule> query;
         if (this.searchType != null && this.searchType == 1) {
             query = ds.find(Rule.class)
-                    .field("project").equal(this.currentProject)
-                    .field("type").equal(RuleType.APPLICANT);
+                    .filter(eq("project", this.currentProject),
+                            eq("type", RuleType.APPLICANT));
         } else {
             query = ds.find(Rule.class)
-                    .field("project").equal(this.currentProject)
-                    .field("type").equal(RuleType.INVENTOR);
+                    .filter(eq("project", this.currentProject),
+                            eq("type", RuleType.INVENTOR));
         }
 
+        FindOptions options = new FindOptions().skip(first).limit(pageSize);
         if (sortField != null) {
-            query = query.order((sortOrder == 1 ? "-" : "") + sortField);
+            options.sort(sortOrder == 1
+                    ? Sort.descending(sortField)
+                    : Sort.ascending(sortField));
         }
         for (Map.Entry<String, String> entry : filters.entrySet()) {
             String column = entry.getKey();
             String value = entry.getValue();
-            query.field(column).containsIgnoreCase(value);
+            query.filter(dev.morphia.query.filters.Filters.regex(column,
+                    ".*" + java.util.regex.Pattern.quote(value) + ".*")
+                    .caseInsensitive());
         }
-        setRowCount((int) query.countAll());
-        query.offset(first).limit(pageSize);
+        setRowCount((int) query.count());
+
         if (this.searchType != null && this.searchType == 1) {
-            query.retrievedFields(true, "_id", "name", "acronym", "substitutions", "country", "state", "type", "nature");
+            options.projection().include("_id", "name", "acronym", "substitutions",
+                    "country", "state", "type", "nature");
         } else {
-            query.retrievedFields(true, "_id", "name", "acronym", "substitutions", "country", "state", "type");
+            options.projection().include("_id", "name", "acronym", "substitutions",
+                    "country", "state", "type");
         }
-        return query.asList();
+        return query.iterator(options).toList();
     }
 
     public List<Rule> getAllRule(Project project) {
-//        Long ini = System.currentTimeMillis();
-        try {
-            return ds.find(Rule.class)
-                    .field("project").equal(project)
-                    .retrievedFields(true, "_id", "name", "acronym", "substitutions", "country", "state", "type", "nature")
-                    .asList();
-        } finally {
-//            System.out.println("Tempo " + (System.currentTimeMillis() - ini));
-        }
-    }
-    
-    public void undoApplicantRule(Project project, String name){
-        DB db = ds.getCollection(Patent.class).getDB();
-        String fnc = "function(project, name){"
-                +       "db.Patent.find({\"project.$id\": project"
-                +       ", \"applicants.name\" : name}).forEach(function(pa){"
-                +           "var newAps = [];"
-                +           "pa.applicants.forEach(function(ap){"
-                +               "if(ap.name = name){"
-                +                   "ap.name = ap.history.name;"
-                +                   "ap.harmonized = false;"
-                +                   "ap.country.name = ap.history.country.name;"
-                +                   "ap.country.acronym = ap.history.country.acronym;"
-                +               "}"
-                +               "newAps.push(ap);"
-                +           "});"
-                +           "db.Patent.update({ _id: pa._id },{ \"$set\": { \"applicants\": newAps } });"
-                +       "});"
-                +   "};";
-        System.out.println(db.eval(fnc, project.getId(), name));
-    }
-    
-    public void unbindApplicantFromRule(Project project, String name){
-        DB db = ds.getCollection(Patent.class).getDB();
-        String fnc = "function(project, name){"
-                +       "db.Patent.find({\"project.$id\": project"
-                +       ", \"applicants.history.name\" : name}).forEach(function(pa){"
-                +           "var newAps = [];"
-                +           "pa.applicants.forEach(function(ap){"
-                +               "if(ap.name = name){"
-                +                   "ap.name = ap.history.name;"
-                +                   "ap.harmonized = false;"
-                +                   "ap.country.name = ap.history.country.name;"
-                +                   "ap.country.acronym = ap.history.country.acronym;"
-                +               "}"
-                +               "newAps.push(ap);"
-                +           "});"
-                +           "db.Patent.update({ _id: pa._id },{ \"$set\": { \"applicants\": newAps } });"
-                +       "});"
-                +   "};";
-        System.out.println(db.eval(fnc, project.getId(), name));
+        FindOptions options = new FindOptions();
+        options.projection().include("_id", "name", "acronym", "substitutions",
+                "country", "state", "type", "nature");
+        return ds.find(Rule.class)
+                .filter(eq("project", project))
+                .iterator(options)
+                .toList();
     }
 
-    public void undoInventorRule(Project project, String name){
-        DB db = ds.getCollection(Patent.class).getDB();
-        String fnc = "function(project, name){"
-                +       "db.Patent.find({\"project.$id\": project"
-                +       ", \"inventors.name\" : name}).forEach(function(pa){"
-                +           "var newInvs = [];"
-                +           "pa.inventors.forEach(function(inv){"
-                +               "if(inv.name = name){"
-                +                   "inv.name = inv.history.name;"
-                +                   "inv.harmonized = false;"
-                +                   "inv.country.name = inv.history.country.name;"
-                +                   "inv.country.acronym = inv.history.country.acronym;"
-                +               "}"
-                +               "newInvs.push(inv);"
-                +           "});"
-                +           "db.Patent.update({ _id: pa._id },{ \"$set\": { \"inventors\": newInvs } });"
-                +       "});"
-                +   "};";
-        System.out.println(db.eval(fnc, project.getId(), name));
+    public void undoApplicantRule(Project project, String name) {
+        List<Patent> patents = ds.find(Patent.class)
+                .filter(eq("project", project), eq("applicants.name", name))
+                .iterator()
+                .toList();
+        for (Patent patent : patents) {
+            if (patent.getApplicants() == null) {
+                continue;
+            }
+            boolean changed = false;
+            for (Applicant applicant : patent.getApplicants()) {
+                if (nameEquals(applicant.getName(), name)) {
+                    restoreApplicantFromHistory(applicant);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                ds.save(patent);
+            }
+        }
     }
-    
-    public void unbindInventorFromRule(Project project, String name){
-        DB db = ds.getCollection(Patent.class).getDB();
-        String fnc = "function(project, name){"
-                +       "db.Patent.find({\"project.$id\": project"
-                +       ", \"inventors.history.name\" : name}).forEach(function(pa){"
-                +           "var newInvs = [];"
-                +           "pa.inventors.forEach(function(inv){"
-                +               "if(inv.name = name){"
-                +                   "inv.name = inv.history.name;"
-                +                   "inv.harmonized = false;"
-                +                   "inv.country.name = inv.history.country.name;"
-                +                   "inv.country.acronym = inv.history.country.acronym;"
-                +               "}"
-                +               "newInvs.push(inv);"
-                +           "});"
-                +           "db.Patent.update({ _id: pa._id },{ \"$set\": { \"inventors\": newInvs } });"
-                +       "});"
-                +   "};";
-        System.out.println(db.eval(fnc, project.getId(), name));
+
+    public void unbindApplicantFromRule(Project project, String name) {
+        List<Patent> patents = ds.find(Patent.class)
+                .filter(eq("project", project), eq("applicants.history.name", name))
+                .iterator()
+                .toList();
+        for (Patent patent : patents) {
+            if (patent.getApplicants() == null) {
+                continue;
+            }
+            boolean changed = false;
+            for (Applicant applicant : patent.getApplicants()) {
+                History history = applicant.getHistory();
+                if (history != null && nameEquals(history.getName(), name)) {
+                    restoreApplicantFromHistory(applicant);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                ds.save(patent);
+            }
+        }
     }
-    
+
+    public void undoInventorRule(Project project, String name) {
+        List<Patent> patents = ds.find(Patent.class)
+                .filter(eq("project", project), eq("inventors.name", name))
+                .iterator()
+                .toList();
+        for (Patent patent : patents) {
+            if (patent.getInventors() == null) {
+                continue;
+            }
+            boolean changed = false;
+            for (Inventor inventor : patent.getInventors()) {
+                if (nameEquals(inventor.getName(), name)) {
+                    restoreInventorFromHistory(inventor);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                ds.save(patent);
+            }
+        }
+    }
+
+    public void unbindInventorFromRule(Project project, String name) {
+        List<Patent> patents = ds.find(Patent.class)
+                .filter(eq("project", project), eq("inventors.history.name", name))
+                .iterator()
+                .toList();
+        for (Patent patent : patents) {
+            if (patent.getInventors() == null) {
+                continue;
+            }
+            boolean changed = false;
+            for (Inventor inventor : patent.getInventors()) {
+                History history = inventor.getHistory();
+                if (history != null && nameEquals(history.getName(), name)) {
+                    restoreInventorFromHistory(inventor);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                ds.save(patent);
+            }
+        }
+    }
+
+    private void restoreApplicantFromHistory(Applicant applicant) {
+        History history = applicant.getHistory();
+        if (history == null) {
+            return;
+        }
+        applicant.setName(history.getName());
+        applicant.setHarmonized(false);
+        if (history.getCountry() != null) {
+            if (applicant.getCountry() == null) {
+                applicant.setCountry(history.getCountry());
+            } else {
+                applicant.getCountry().setName(history.getCountry().getName());
+                applicant.getCountry().setAcronym(history.getCountry().getAcronym());
+            }
+        }
+    }
+
+    private void restoreInventorFromHistory(Inventor inventor) {
+        History history = inventor.getHistory();
+        if (history == null) {
+            return;
+        }
+        inventor.setName(history.getName());
+        inventor.setHarmonized(false);
+        if (history.getCountry() != null) {
+            if (inventor.getCountry() == null) {
+                inventor.setCountry(history.getCountry());
+            } else {
+                inventor.getCountry().setName(history.getCountry().getName());
+                inventor.getCountry().setAcronym(history.getCountry().getAcronym());
+            }
+        }
+    }
+
+    private static boolean nameEquals(String left, String right) {
+        if (left == null) {
+            return right == null;
+        }
+        return left.equals(right);
+    }
+
     public List<Rule> getApplicantRule(Project project) {
         return ds.find(Rule.class)
-                .field("project").equal(project)
-                .field("type").equal(RuleType.APPLICANT)
-                .asList();
+                .filter(eq("project", project), eq("type", RuleType.APPLICANT))
+                .iterator()
+                .toList();
     }
 
     public List<Rule> getInventorRule(Project project) {
         return ds.find(Rule.class)
-                .field("project").equal(project)
-                .field("type").equal(RuleType.INVENTOR)
-                .asList();
+                .filter(eq("project", project), eq("type", RuleType.INVENTOR))
+                .iterator()
+                .toList();
     }
 
     public void save(Rule rule) {
@@ -174,34 +228,34 @@ public class RuleRepository {
         if (r != null) {
             delete(r.getId().toString());
             rule.getSubstitutions().addAll(r.getSubstitutions());
-
         }
-        Key k = ds.save(rule);
+        ds.save(rule);
     }
-    
-    public Boolean isRule(String name){
-        return !(ds.find(Rule.class).field("name").equal(name).get() == null);
+
+    public Boolean isRule(String name) {
+        return ds.find(Rule.class).filter(eq("name", name)).first() != null;
     }
 
     public Rule findByName(String name) {
-        return ds.find(Rule.class).field("name").equal(name).get();
+        return ds.find(Rule.class).filter(eq("name", name)).first();
     }
 
     public Rule findById(String id) {
-        return ds.get(Rule.class, new ObjectId(id));
+        return ds.find(Rule.class).filter(eq("_id", new ObjectId(id))).first();
     }
 
     public void delete(String id) {
-        ds.delete(Rule.class, new ObjectId(id));
+        Rule rule = findById(id);
+        if (rule != null) {
+            ds.delete(rule);
+        }
     }
 
     public int getRowCount() {
         if (rowCount == null) {
-
-            Query query = ds.find(Rule.class)
-                    .field("project").equal(this.currentProject);
-
-            rowCount = (int) query.countAll();
+            Query<Rule> query = ds.find(Rule.class)
+                    .filter(eq("project", this.currentProject));
+            rowCount = (int) query.count();
         }
         return rowCount;
     }
