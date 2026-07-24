@@ -4,10 +4,13 @@ import br.ufmt.periscope.model.Inventor;
 import br.ufmt.periscope.repository.InventorRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.FilterMeta;
+import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
 
 @Named
@@ -27,6 +30,11 @@ public class LazyInventorDataModel extends LazyDataModel<Inventor> {
     
 
     @Override
+    public int count(Map<String, FilterMeta> filterBy) {
+        return getRowCount();
+    }
+
+    @Override
     public int getRowCount() {
         return super.getRowCount(); //To change body of generated methods, choose Tools | Templates.
     }
@@ -42,20 +50,38 @@ public class LazyInventorDataModel extends LazyDataModel<Inventor> {
     }
 
     @Override
-    public Object getRowKey(Inventor object) {
+    public String getRowKey(Inventor object) {
         return object.getName();
     }
 
     @Override
-    public List<Inventor> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, String> filters) {
+    public List<Inventor> load(int first, int pageSize, Map<String, SortMeta> sortBy, Map<String, FilterMeta> filterBy) {
+        String sortField = null;
+        int sortOrd = 0;
+        if (sortBy != null && !sortBy.isEmpty()) {
+            SortMeta meta = sortBy.values().iterator().next();
+            sortField = meta.getField();
+            if (meta.getOrder() == SortOrder.DESCENDING) {
+                sortOrd = 1;
+            }
+        }
+        Map<String, String> filters = new HashMap<String, String>();
+        if (filterBy != null) {
+            for (Map.Entry<String, FilterMeta> e : filterBy.entrySet()) {
+                if (e.getValue() != null && e.getValue().getFilterValue() != null) {
+                    filters.put(e.getKey(), e.getValue().getFilterValue().toString());
+                }
+            }
+        }
+
         long inicio = System.currentTimeMillis();
         inventorRepository.setSearchType(searchType);
         
 
         if (harmonization) {
-            datasource = inventorRepository.load(first, pageSize, sortField, sortOrder.ordinal(), filters);
+            datasource = inventorRepository.load(first, pageSize, sortField, sortOrd, filters);
         } else {
-            datasource = inventorRepository.load(first, pageSize, sortField, sortOrder.ordinal(), filters, this.selectedInventors);
+            datasource = inventorRepository.load(first, pageSize, sortField, sortOrd, filters, this.selectedInventors);
         }
         if (this.selectedInventors == null) {
             System.out.println("null");

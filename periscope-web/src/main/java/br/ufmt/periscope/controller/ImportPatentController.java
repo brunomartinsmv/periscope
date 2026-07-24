@@ -4,15 +4,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 
-import javax.annotation.PostConstruct;
-import javax.faces.application.FacesMessage;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.application.FacesMessage;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.faces.context.FacesContext;
+import jakarta.inject.Inject;
 
 import org.primefaces.event.FileUploadEvent;
-import org.primefaces.model.UploadedFile;
+import org.primefaces.model.file.UploadedFile;
 
 import br.ufmt.periscope.importer.PatentImporter;
 import br.ufmt.periscope.importer.PatentImporterFactory;
@@ -25,15 +25,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import javax.faces.event.ValueChangeEvent;
-import org.primefaces.context.RequestContext;
+import jakarta.faces.event.ValueChangeEvent;
+import org.primefaces.PrimeFaces;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * - @ViewScoped<BR/>
  * Classe controller responsável por operações relacionadas à importação
  */
-@ManagedBean
+@Named
 @ViewScoped
 public class ImportPatentController implements Serializable {
 
@@ -81,7 +81,7 @@ public class ImportPatentController implements Serializable {
                 int count = 0;
                 for (UploadedFile file : uploadAttachment) {
                     count++;
-                    InputStream is = file.getInputstream();
+                    InputStream is = file.getInputStream();
                     PatentImporter importer = importerFactory.getImporter(fileOrigin);
                     if (!file.getFileName().contains("csv") || !importer.provider().equals("PATENTSCOPE")
                             && (!file.getFileName().contains("xls") || !importer.provider().equals("DPMA"))) {

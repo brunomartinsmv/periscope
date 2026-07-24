@@ -5,7 +5,7 @@
  */
 package br.ufmt.periscope.indexer.resources.search;
 
-import br.ufmt.periscope.indexer.LuceneIndexerResources;;
+import br.ufmt.periscope.indexer.LuceneIndexerResources;
 import br.ufmt.periscope.indexer.resources.analysis.FastJoinAnalyzer;
 import br.ufmt.periscope.indexer.resources.analysis.QuerySignaturesAnalyzer;
 import java.io.IOException;
@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;

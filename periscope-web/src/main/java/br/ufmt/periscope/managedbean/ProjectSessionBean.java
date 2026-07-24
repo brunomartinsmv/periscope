@@ -6,10 +6,10 @@ import com.github.jmkgreen.morphia.Datastore;
 import com.github.jmkgreen.morphia.mapping.lazy.DatastoreHolder;
 import com.github.jmkgreen.morphia.query.Query;
 import java.io.Serializable;
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.SessionScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 import org.bson.types.ObjectId;
 
 @Named("projectSession")

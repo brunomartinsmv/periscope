@@ -18,9 +18,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Named;
-import org.primefaces.model.SortOrder;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.bson.types.ObjectId;
 
 @Named

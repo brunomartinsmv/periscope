@@ -2,8 +2,8 @@ package br.ufmt.periscope.repository;
 
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import br.ufmt.periscope.model.Country;
 

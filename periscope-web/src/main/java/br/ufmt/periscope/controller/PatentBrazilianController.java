@@ -1,21 +1,21 @@
 package br.ufmt.periscope.controller;
 
 import br.ufmt.periscope.lazy.LazyPatentBrazilianDataModel;
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.faces.model.DataModel;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.faces.model.DataModel;
+import jakarta.inject.Inject;
 import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.qualifier.CurrentProject;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * - @ViewScoped<BR/>
  * Classe controller responsável por operações relacionadas às patentes brasileiras
  */
-@ManagedBean
+@Named
 @ViewScoped
 public class PatentBrazilianController {
 

@@ -8,8 +8,8 @@ import com.github.jmkgreen.morphia.mapping.Mapper;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 import java.util.ArrayList;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.bson.types.ObjectId;
 
 @Named

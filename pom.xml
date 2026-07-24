@@ -17,9 +17,8 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <maven.compiler.release>21</maven.compiler.release>
 
-      <!-- Target stack versions (Fases 1–5) -->
       <jakartaee.version>10.0.0</jakartaee.version>
-      <primefaces.version>3.4.2</primefaces.version>
+      <primefaces.version>14.0.0</primefaces.version>
       <primefaces.theme.version>1.0.8</primefaces.theme.version>
       <morphia.version>1.2.3</morphia.version>
       <lucene.version>6.0.0</lucene.version>
@@ -29,7 +28,6 @@
       <commons-io.version>2.16.1</commons-io.version>
       <junit.version>5.11.0</junit.version>
 
-      <!-- Plugin versions -->
       <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
       <maven.war.plugin.version>3.4.0</maven.war.plugin.version>
       <maven.ejb.plugin.version>3.2.1</maven.ejb.plugin.version>
@@ -38,7 +36,7 @@
    </properties>
 
    <repositories>
-      <!-- Vendored PrimeFaces 3.4.2 / theme (HTTP repos removed). PF 14 na Fase 2/5. -->
+      <!-- Theme bootstrap 1.0.8 still vendored; PrimeFaces 14 vem do Central -->
       <repository>
          <id>legacy-m2</id>
          <name>Vendored legacy artifacts</name>
@@ -61,7 +59,6 @@
             <type>war</type>
          </dependency>
 
-         <!-- Preparação Fase 2: BOM Jakarta EE 10 (ainda não usado nos módulos) -->
          <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-bom</artifactId>
@@ -70,60 +67,11 @@
             <scope>import</scope>
          </dependency>
 
-         <!-- APIs Java EE 6 (temporário até Fase 2) -->
-         <dependency>
-            <groupId>javax</groupId>
-            <artifactId>javaee-api</artifactId>
-            <version>6.0</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
-            <version>1.0-SP4</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.spec.javax.faces</groupId>
-            <artifactId>jboss-jsf-api_2.0_spec</artifactId>
-            <version>1.0.0.Final</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.spec.javax.servlet</groupId>
-            <artifactId>jboss-servlet-api_3.0_spec</artifactId>
-            <version>1.0.0.Final</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.spec.javax.ejb</groupId>
-            <artifactId>jboss-ejb-api_3.1_spec</artifactId>
-            <version>1.0.1.Final</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.spec.javax.ws.rs</groupId>
-            <artifactId>jboss-jaxrs-api_1.1_spec</artifactId>
-            <version>1.0.0.Final</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.0-api</artifactId>
-            <version>1.0.1.Final</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>4.1.0.Final</version>
-            <scope>provided</scope>
-         </dependency>
-
          <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
             <version>${primefaces.version}</version>
+            <classifier>jakarta</classifier>
          </dependency>
          <dependency>
             <groupId>org.primefaces.themes</groupId>
@@ -227,7 +175,7 @@
                <artifactId>maven-ejb-plugin</artifactId>
                <version>${maven.ejb.plugin.version}</version>
                <configuration>
-                  <ejbVersion>3.1</ejbVersion>
+                  <ejbVersion>3.2</ejbVersion>
                </configuration>
             </plugin>
             <plugin>
@@ -260,13 +208,9 @@
 
    <dependencies>
       <dependency>
-         <groupId>org.jboss.spec.javax.faces</groupId>
-         <artifactId>jboss-jsf-api_2.0_spec</artifactId>
-         <scope>provided</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.spec.javax.servlet</groupId>
-         <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+         <groupId>jakarta.platform</groupId>
+         <artifactId>jakarta.jakartaee-api</artifactId>
+         <version>${jakartaee.version}</version>
          <scope>provided</scope>
       </dependency>
    </dependencies>

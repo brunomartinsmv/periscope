@@ -3,24 +3,24 @@ package br.ufmt.periscope.controller;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
 
-import org.primefaces.model.chart.CartesianChartModel;
-import org.primefaces.model.chart.ChartSeries;
+import br.ufmt.periscope.compat.chart.CartesianChartModel;
+import br.ufmt.periscope.compat.chart.ChartSeries;
 
 import br.ufmt.periscope.report.MainIPCReport;
 import br.ufmt.periscope.report.Pair;
-import javax.faces.event.ValueChangeEvent;
+import jakarta.faces.event.ValueChangeEvent;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * - @ViewScoped<BR/>
  * Classe controller responsável por operações de visualização relacionadas à classificação IPC
  */
-@ManagedBean
+@Named
 @ViewScoped
 public class MainIPCController extends GenericController {
 

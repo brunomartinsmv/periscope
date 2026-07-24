@@ -5,18 +5,21 @@ import br.ufmt.periscope.qualifier.CurrentProject;
 import br.ufmt.periscope.report.Pair;
 import br.ufmt.periscope.repository.PatentRepository;
 import br.ufmt.periscope.util.Filters;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-import javax.annotation.PostConstruct;
-import javax.faces.event.ValueChangeEvent;
-import javax.inject.Inject;
-import org.primefaces.model.chart.CartesianChartModel;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.event.ValueChangeEvent;
+import jakarta.inject.Inject;
+import br.ufmt.periscope.compat.chart.CartesianChartModel;
 
 /**
  * Modelo abstrato generico dos controllers<BR/>
  * Quase todos os controllers de gráficos do sistema extendem essa classe
  */
-public abstract class GenericController {
+public abstract class GenericController implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private @Inject
     @CurrentProject

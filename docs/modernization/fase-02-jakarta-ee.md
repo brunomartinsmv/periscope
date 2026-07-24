@@ -169,12 +169,12 @@ Corrigir erros restantes de API (PrimeFaces upload/download fica para Fase 5).
 
 ## Critérios de aceite
 
-- [ ] Zero imports `javax.faces`, `javax.servlet`, `javax.enterprise`, `javax.ejb`
-- [ ] Zero `@ManagedBean` — todos usam `@Named`
-- [ ] `web.xml`, `faces-config.xml`, `beans.xml` com namespace Jakarta EE 10
-- [ ] XHTML com namespaces jakarta.faces
-- [ ] `mvn clean compile` passa (exceto erros de Mongo/Lucene/PDFBox — fases 3–5)
-- [ ] PrimeFaces 14 jakarta no classpath do módulo web
+- [x] Zero imports `javax.faces`, `javax.servlet`, `javax.enterprise`, `javax.ejb`
+- [x] Zero `@ManagedBean` — todos usam `@Named`
+- [x] `web.xml`, `faces-config.xml`, `beans.xml` com namespace Jakarta EE 10
+- [x] XHTML com namespaces jakarta.faces
+- [x] `mvn clean compile` passa (exceto erros de Mongo/Lucene/PDFBox — fases 3–5)
+- [x] PrimeFaces 14 jakarta no classpath do módulo web
 
 ## Riscos
 
