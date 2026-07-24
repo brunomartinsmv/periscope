@@ -14,10 +14,7 @@ import br.ufmt.periscope.controller.LoginController;
 import br.ufmt.periscope.model.User;
 import br.ufmt.periscope.model.UserLevel;
 import br.ufmt.periscope.qualifier.LoggedUser;
-
-import static dev.morphia.query.filters.Filters.eq;
-
-import dev.morphia.Datastore;
+import br.ufmt.periscope.security.UserAuthenticator;
 
 @Named
 @SessionScoped
@@ -26,17 +23,15 @@ public class SessionBean implements Serializable {
     private static final long serialVersionUID = 440310707447932765L;
 
     @Inject
-    private Datastore ds;
+    private UserAuthenticator userAuthenticator;
     @Inject
     private LoginController loginController;
     private User loggedUser;
 
     public String login() {
-        User u = ds.find(User.class)
-                .filter(
-                        eq("username", loginController.getLogin()),
-                        eq("password", loginController.getPassword()))
-                .first();
+        User u = userAuthenticator.authenticate(
+                loginController.getLogin(),
+                loginController.getPassword());
 
         if (u != null) {
             loggedUser = u;

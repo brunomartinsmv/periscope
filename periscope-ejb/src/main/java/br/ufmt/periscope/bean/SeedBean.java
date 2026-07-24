@@ -15,6 +15,7 @@ import jakarta.inject.Inject;
 
 import br.ufmt.periscope.model.Country;
 import br.ufmt.periscope.model.User;
+import br.ufmt.periscope.security.PasswordHasher;
 import br.ufmt.periscope.util.YamlLoader;
 
 import dev.morphia.Datastore;
@@ -164,7 +165,11 @@ public class SeedBean {
             List<User> users = YamlLoader.loadList("user-inicial.yaml", User.class);
             Iterator<User> it = users.iterator();
             while (it.hasNext()) {
-                ds.save(it.next());
+                User user = it.next();
+                if (user.getPassword() != null && PasswordHasher.needsRehash(user.getPassword())) {
+                    user.setPassword(PasswordHasher.hash(user.getPassword()));
+                }
+                ds.save(user);
             }
             log.info("Cadastrado " + users.size() + " usuários.");
         }

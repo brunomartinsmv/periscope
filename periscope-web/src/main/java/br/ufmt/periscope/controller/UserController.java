@@ -20,6 +20,7 @@ import org.bson.types.ObjectId;
 import br.ufmt.periscope.model.User;
 import br.ufmt.periscope.model.UserLevel;
 import br.ufmt.periscope.qualifier.LoggedUser;
+import br.ufmt.periscope.security.PasswordHasher;
 
 import dev.morphia.Datastore;
 
@@ -88,6 +89,10 @@ public class UserController implements Serializable {
             hasUniqueUsername = existingUser == null;
         }
         if (hasUniqueUsername) {
+            if (user.getPassword() != null && !user.getPassword().isBlank()
+                    && PasswordHasher.needsRehash(user.getPassword())) {
+                user.setPassword(PasswordHasher.hash(user.getPassword()));
+            }
             ds.save(user);
             Flash flash = FacesContext.getCurrentInstance().
                     getExternalContext().getFlash();

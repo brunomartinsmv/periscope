@@ -194,9 +194,12 @@ public class PatentRepository {
 
         FindOptions options = new FindOptions().skip(first).limit(pageSize);
         applySort(options, sortField, sortOrder);
+        // Do NOT include "project": Morphia @Reference resolves it while the
+        // outer cursor is open and exhausts the Mongo connection pool.
         options.projection().include(
                 "_id", "applicationCountry", "titleSelect", "mainClassification",
-                "publicationDate", "applicationNumber", "applicants", "inventors",
+                "publicationDate", "publicationNumber", "applicationDate", "applicationNumber",
+                "applicants", "inventors",
                 "blacklisted", "presentationFile", "patentInfo");
         return query.iterator(options).toList();
     }
