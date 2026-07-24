@@ -98,12 +98,53 @@ JSON malformado / corpo ilegível → **400**. Campos desconhecidos no payload s
 | `PERISCOPE_JWT_EXPIRATION_HOURS` | `8` | Validade do token |
 | `PERISCOPE_CORS_ORIGINS` | `http://localhost:5173` | Origins CORS (CSV) |
 
-## Frontend (pendente — `periscope-ui`)
+## Frontend (`periscope-ui`)
 
-- Stack sugerida: React + Vite + TypeScript + TanStack Query
-- Consumir a tabela de endpoints acima
-- Armazenar JWT (memory/localStorage) e enviar Bearer
-- Em produção: servir SPA e API no mesmo host (proxy) para evitar CORS
+SPA React implementada em `periscope-ui/` (branch `bruno/fase-7-spa-a4b3`).
+
+### Stack
+
+| Peça | Escolha |
+|------|---------|
+| UI | React 19 + TypeScript |
+| Bundler | Vite 8 (`base: '/periscope/app/'`) |
+| Rotas | `react-router-dom` (basename `/periscope/app`) |
+| Dados | `@tanstack/react-query` |
+| HTTP | `fetch` encapsulado em `src/api/client.ts` |
+| Gráficos | `recharts` |
+| Estilo | CSS próprio (`src/styles/global.css`) |
+
+### Rotas implementadas
+
+| Rota SPA | Endpoints consumidos |
+|----------|----------------------|
+| `/login` | `POST /auth/login`, `GET /auth/me`, `POST /auth/logout` |
+| `/projects` | `GET/POST /projects`, `PUT/DELETE /projects/{id}` |
+| `/projects/:id/patents` | `GET /projects/{id}/patents?page&size`, `DELETE /patents/{id}` |
+| `/projects/:id/patents/:patentId` | `GET/PUT/DELETE /patents/{id}`, `GET /files/{id}` |
+| `/projects/:id/import` | `POST /projects/{id}/patents/import` (multipart `file` + `type`) |
+| `/projects/:id/harmonization` | `GET …/suggestions`, `GET/POST/DELETE …/rules`, `POST …/apply` |
+| `/projects/:id/reports` | `GET …/reports/{main-applicant\|main-inventor\|main-ipc\|application-date\|publication-date}` |
+| `/users` | `GET /users` (menu só para `ADMIN`) |
+
+Auth: JWT em `localStorage`, header `Authorization: Bearer`, 401 limpa sessão e redireciona para `/login`.
+
+### Como servir
+
+**Dev:** `cd periscope-ui && npm ci && npm run dev` → `http://localhost:5173/periscope/app/`  
+Proxy Vite: `/periscope/rest` → `http://localhost:8080`. Variável `VITE_API_BASE` (default `/periscope/rest`).
+
+**Produção (WAR):** sem Node no Maven. Gere os estáticos e empacote:
+
+```bash
+cd periscope-ui && npm run build:war
+# → periscope-web/src/main/webapp/app/  (gitignored)
+mvn -B package
+```
+
+`SpaFallbackFilter` (`/app/*`) devolve `index.html` para rotas client-side, sem afetar `*.jsf`, `/rest/*` nem `/pages/*`. Sem a pasta `app/`, o WAR sobe só com JSF + REST.
+
+Alternativa: nginx servindo `dist/` com `try_files` + proxy da API — não usado neste ambiente.
 
 ## Testes
 

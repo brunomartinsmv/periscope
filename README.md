@@ -94,6 +94,31 @@ TOKEN=$(curl -s -X POST http://localhost:8080/periscope/rest/auth/login \
 curl -s http://localhost:8080/periscope/rest/auth/me -H "Authorization: Bearer $TOKEN"
 ```
 
+## SPA React (`periscope-ui`)
+
+Interface moderna em React + Vite + TypeScript consumindo a API REST.
+
+**Dev (com proxy para o WildFly):**
+
+```bash
+cd periscope-ui
+npm ci
+npm run dev
+# → http://localhost:5173/periscope/app/  (login: admin / 123456)
+```
+
+**Embarcar no WAR** (Maven não executa Node; a pasta `webapp/app/` é gitignored):
+
+```bash
+cd periscope-ui && npm run build:war
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+mvn -B package
+cp periscope-web/target/periscope.war /opt/jboss/wildfly-34.0.1.Final/standalone/deployments/
+# → http://localhost:8080/periscope/app/
+```
+
+Detalhes: [periscope-ui/README.md](periscope-ui/README.md) e [docs/modernization/fase-07-spa.md](docs/modernization/fase-07-spa.md).
+
 ## Context root
 
 `/periscope` (definido em `WEB-INF/jboss-web.xml`).
