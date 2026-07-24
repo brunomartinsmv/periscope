@@ -176,14 +176,22 @@ public class SeedBean {
      */
     private void initCommonsDescriptors() {
         if (ds.find(CommonDescriptor.class).count() == 0L) {
-            writer = resources.getIndexWriter();
             log.info("Nenhum descritor comum encontrado.");
+            writer = resources.getIndexWriter();
+            if (writer == null) {
+                log.log(Level.SEVERE,
+                        "Lucene IndexWriter unavailable under {0}; seeding descriptors to Mongo only",
+                        PERISCOPE_DIR);
+            }
             List<CommonDescriptor> descriptors = YamlLoader
                     .loadList("descriptors.yaml", CommonDescriptor.class);
             Iterator<CommonDescriptor> it = descriptors.iterator();
             while (it.hasNext()) {
                 CommonDescriptor desc = it.next();
                 ds.save(desc);
+                if (writer == null) {
+                    continue;
+                }
                 Document doc = new Document();
                 doc.add(new TextField("id", desc.getWord(), Field.Store.YES));
                 try {
@@ -195,7 +203,9 @@ public class SeedBean {
             }
 
             log.info("Cadastrado " + descriptors.size() + " descritores comuns.");
-            resources.closeWriter(writer);
+            if (writer != null) {
+                resources.closeWriter(writer);
+            }
         }
     }
 }

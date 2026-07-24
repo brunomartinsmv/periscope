@@ -10,6 +10,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import dev.morphia.Datastore;
+import dev.morphia.DeleteOptions;
 import dev.morphia.query.FindOptions;
 import static dev.morphia.query.filters.Filters.eq;
 import static dev.morphia.query.filters.Filters.or;
@@ -107,8 +108,9 @@ public class ProjectRepository {
     }
 
     public void deleteProject(Project project) {
-        ds.find(Patent.class).filter(eq("project", project)).delete();
-        ds.find(Rule.class).filter(eq("project", project)).delete();
+        DeleteOptions multi = new DeleteOptions().multi(true);
+        ds.find(Patent.class).filter(eq("project", project)).delete(multi);
+        ds.find(Rule.class).filter(eq("project", project)).delete(multi);
         ds.delete(project);
     }
 }
