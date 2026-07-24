@@ -11,123 +11,263 @@
       <module>periscope-ejb</module>
       <module>periscope-web</module>
       <module>periscope-ear</module>
-  </modules>
+   </modules>
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <maven.compiler.release>21</maven.compiler.release>
+
+      <!-- Target stack versions (Fases 1–5) -->
+      <jakartaee.version>10.0.0</jakartaee.version>
+      <primefaces.version>3.4.2</primefaces.version>
+      <primefaces.theme.version>1.0.8</primefaces.theme.version>
+      <morphia.version>1.2.3</morphia.version>
+      <lucene.version>6.0.0</lucene.version>
+      <pdfbox.version>1.8.4</pdfbox.version>
+      <poi.version>3.10-beta2</poi.version>
+      <jackson.version>2.18.0</jackson.version>
+      <commons-io.version>2.16.1</commons-io.version>
+      <junit.version>5.11.0</junit.version>
+
+      <!-- Plugin versions -->
+      <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+      <maven.war.plugin.version>3.4.0</maven.war.plugin.version>
+      <maven.ejb.plugin.version>3.2.1</maven.ejb.plugin.version>
+      <maven.ear.plugin.version>3.3.0</maven.ear.plugin.version>
+      <buildnumber.plugin.version>3.2.1</buildnumber.plugin.version>
    </properties>
+
+   <repositories>
+      <!-- Vendored PrimeFaces 3.4.2 / theme (HTTP repos removed). PF 14 na Fase 2/5. -->
+      <repository>
+         <id>legacy-m2</id>
+         <name>Vendored legacy artifacts</name>
+         <url>file://${maven.multiModuleProjectDirectory}/tools/legacy-m2</url>
+      </repository>
+   </repositories>
 
    <dependencyManagement>
       <dependencies>
-
-         <!-- Define the version of the EJB jar so that we don't need to 
-            repeat ourselves in every module -->
          <dependency>
             <groupId>br.ufmt</groupId>
             <artifactId>periscope-ejb</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>ejb</type>
          </dependency>
-
-         <!-- Define the version of the WAR so that we don't need to repeat 
-            ourselves in every module -->
          <dependency>
             <groupId>br.ufmt</groupId>
             <artifactId>periscope-web</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>war</type>
-            <scope>compile</scope>
          </dependency>
-         
 
-         <!-- Define the version of JBoss' Java EE 6 APIs we want to import. 
-            Any dependencies from org.jboss.spec will have their version defined by this 
-            BOM -->
-         <!-- JBoss distributes a complete set of Java EE 6 APIs including 
-            a Bill of Materials (BOM). A BOM specifies the versions of a "stack" (or 
-            a collection) of artifacts. We use this here so that we always get the correct 
-            versions of artifacts. Here we use the jboss-javaee-web-6.0 stack (you can 
-            read this as the JBoss stack of the Java EE Web Profile 6 APIs), and we use 
-            version 2.0.0.Beta1 which is the latest release of the stack. You can actually 
-            use this stack with any version of JBoss AS that implements Java EE 6, not 
-            just JBoss AS 7! -->
+         <!-- Preparação Fase 2: BOM Jakarta EE 10 (ainda não usado nos módulos) -->
          <dependency>
-            <groupId>org.jboss.spec</groupId>
-            <artifactId>jboss-javaee-web-6.0</artifactId>
-            <version>2.0.0.Final</version>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-bom</artifactId>
+            <version>${jakartaee.version}</version>
             <type>pom</type>
             <scope>import</scope>
          </dependency>
 
-         <!-- JSR-303 (Bean Validation) Implementation -->
-         <!-- Provides portable constraints such as @Email -->
-         <!-- Hibernate Validator is shipped in JBoss AS 7 -->
+         <!-- APIs Java EE 6 (temporário até Fase 2) -->
+         <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>6.0</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>1.0-SP4</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.spec.javax.faces</groupId>
+            <artifactId>jboss-jsf-api_2.0_spec</artifactId>
+            <version>1.0.0.Final</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.spec.javax.servlet</groupId>
+            <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+            <version>1.0.0.Final</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.spec.javax.ejb</groupId>
+            <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+            <version>1.0.1.Final</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.spec.javax.ws.rs</groupId>
+            <artifactId>jboss-jaxrs-api_1.1_spec</artifactId>
+            <version>1.0.0.Final</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.0-api</artifactId>
+            <version>1.0.1.Final</version>
+            <scope>provided</scope>
+         </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>4.1.0.Final</version>
             <scope>provided</scope>
-            <exclusions>
-               <exclusion>
-                  <groupId>org.slf4j</groupId>
-                  <artifactId>slf4j-api</artifactId>
-               </exclusion>
-            </exclusions>
          </dependency>
 
-         <!-- Test dependencies -->
          <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <type>jar</type>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces</artifactId>
+            <version>${primefaces.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.primefaces.themes</groupId>
+            <artifactId>bootstrap</artifactId>
+            <version>${primefaces.theme.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>com.github.jmkgreen.morphia</groupId>
+            <artifactId>morphia</artifactId>
+            <version>${morphia.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>${lucene.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-common</artifactId>
+            <version>${lucene.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>${lucene.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queries</artifactId>
+            <version>${lucene.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${poi.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>fontbox</artifactId>
+            <version>${pdfbox.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>jempbox</artifactId>
+            <version>${pdfbox.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
          </dependency>
-
       </dependencies>
    </dependencyManagement>
 
    <build>
       <pluginManagement>
          <plugins>
-            <!-- Compiler plugin enforces Java 1.6 compatibility and activates 
-               annotation processors -->
             <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-compiler-plugin</artifactId>
-               <version>2.3.2</version>
+               <version>${maven.compiler.plugin.version}</version>
                <configuration>
-                  <source>1.6</source>
-                  <target>1.6</target>
+                  <release>${maven.compiler.release}</release>
+                  <encoding>${project.build.sourceEncoding}</encoding>
                </configuration>
             </plugin>
-            <!-- The JBoss AS plugin deploys your ear to a local JBoss AS 
-               container -->
-            <!-- Due to Maven's lack of intelligence with EARs we need to 
-               configure the jboss-as maven plugin to skip deployment for all modules. We 
-               then enable it specifically in the ear module. -->
             <plugin>
-               <groupId>org.jboss.as.plugins</groupId>
-               <artifactId>jboss-as-maven-plugin</artifactId>
-               <version>7.0.2.Final</version>
-               <inherited>true</inherited>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-war-plugin</artifactId>
+               <version>${maven.war.plugin.version}</version>
                <configuration>
-                  <skip>true</skip>
+                  <failOnMissingWebXml>false</failOnMissingWebXml>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-ejb-plugin</artifactId>
+               <version>${maven.ejb.plugin.version}</version>
+               <configuration>
+                  <ejbVersion>3.1</ejbVersion>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-ear-plugin</artifactId>
+               <version>${maven.ear.plugin.version}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>buildnumber-maven-plugin</artifactId>
+               <version>${buildnumber.plugin.version}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-surefire-plugin</artifactId>
+               <version>3.5.0</version>
+               <configuration>
+                  <useModulePath>false</useModulePath>
                </configuration>
             </plugin>
          </plugins>
       </pluginManagement>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+         </plugin>
+      </plugins>
    </build>
 
    <dependencies>
-   	<dependency>
-   		<groupId>org.jboss.spec.javax.faces</groupId>
-   		<artifactId>jboss-jsf-api_2.0_spec</artifactId>
-   		<scope>provided</scope>
-   	</dependency>
-   	<dependency>
-   		<groupId>org.jboss.spec.javax.servlet</groupId>
-   		<artifactId>jboss-servlet-api_3.0_spec</artifactId>
-   		<scope>provided</scope>
-   	</dependency>
+      <dependency>
+         <groupId>org.jboss.spec.javax.faces</groupId>
+         <artifactId>jboss-jsf-api_2.0_spec</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.spec.javax.servlet</groupId>
+         <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+         <scope>provided</scope>
+      </dependency>
    </dependencies>
 </project>

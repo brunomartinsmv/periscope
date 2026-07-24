@@ -19,9 +19,8 @@ import org.bson.types.Code;
 
 import br.ufmt.periscope.model.Country;
 import br.ufmt.periscope.model.User;
+import br.ufmt.periscope.util.YamlLoader;
 
-import com.bigfatgun.fixjures.Fixjure;
-import com.bigfatgun.fixjures.yaml.YamlSource;
 import com.github.jmkgreen.morphia.Datastore;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -33,7 +32,6 @@ import java.util.Enumeration;
 import java.util.jar.Manifest;
 import javax.enterprise.inject.Produces;
 import javax.faces.bean.ApplicationScoped;
-import javax.faces.bean.RequestScoped;
 import javax.inject.Named;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -162,11 +160,8 @@ public class SeedBean {
     private void initApplicantTypes() {
         if (ds.getCount(ApplicantType.class) == 0l) {
             log.info("Nenhuma Natureza encontrada.");
-            List<ApplicantType> applicantTypes = Fixjure
-                    .listOf(ApplicantType.class)
-                    .from(YamlSource
-                            .newYamlResource("applicantType-inicial.yaml"))
-                    .create();
+            List<ApplicantType> applicantTypes = YamlLoader
+                    .loadList("applicantType-inicial.yaml", ApplicantType.class);
             Iterator<ApplicantType> it = applicantTypes.iterator();
             while (it.hasNext()) {
                 ds.save(it.next());
@@ -182,11 +177,8 @@ public class SeedBean {
     private void initCountries() {
         if (ds.getCount(Country.class) == 0l) {
             log.info("Nenhum país encontrado.");
-            List<Country> countries = Fixjure
-                    .listOf(Country.class)
-                    .from(YamlSource
-                            .newYamlResource("country-inicial-data.yaml"))
-                    .create();
+            List<Country> countries = YamlLoader
+                    .loadList("country-inicial-data.yaml", Country.class);
             Iterator<Country> it = countries.iterator();
             while (it.hasNext()) {
                 ds.save(it.next());
@@ -201,9 +193,7 @@ public class SeedBean {
     private void initUsers() {
         if (ds.getCount(User.class) == 0l) {
             log.info("Nenhum usuário encontrado.");
-            List<User> users = Fixjure.listOf(User.class)
-                    .from(YamlSource.newYamlResource("user-inicial.yaml"))
-                    .create();
+            List<User> users = YamlLoader.loadList("user-inicial.yaml", User.class);
             Iterator<User> it = users.iterator();
             while (it.hasNext()) {
                 ds.save(it.next());
@@ -220,8 +210,8 @@ public class SeedBean {
         if (ds.getCount(CommonDescriptor.class) == 0l) {
             writer = resources.getIndexWriter();
             log.info("Nenhum descritor comum encontrado.");
-            List<CommonDescriptor> descriptors = Fixjure.listOf(CommonDescriptor.class)
-                    .from(YamlSource.newYamlResource("descriptors.yaml")).create();
+            List<CommonDescriptor> descriptors = YamlLoader
+                    .loadList("descriptors.yaml", CommonDescriptor.class);
             Iterator<CommonDescriptor> it = descriptors.iterator();
             while (it.hasNext()) {
                 CommonDescriptor desc = it.next();
