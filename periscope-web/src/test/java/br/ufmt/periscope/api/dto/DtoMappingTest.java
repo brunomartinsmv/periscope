@@ -77,4 +77,22 @@ class DtoMappingTest {
         assertThat(dto.title()).isEqualTo("SOLAR TRACKING");
         assertThat(dto.id()).isEqualTo(patent.getId().toString());
     }
+
+    @Test
+    void ruleDtoFromWithExplicitProjectIdDoesNotNeedProjectReference() {
+        br.ufmt.periscope.model.Rule rule = new br.ufmt.periscope.model.Rule();
+        rule.setId(new ObjectId());
+        rule.setName("ACME GmbH");
+        rule.setType(br.ufmt.periscope.model.RuleType.APPLICANT);
+        // deliberately leave project null — list projections omit it
+        rule.setProject(null);
+
+        String projectId = new ObjectId().toString();
+        RuleDTO dto = RuleDTO.from(rule, projectId);
+
+        assertThat(dto.projectId()).isEqualTo(projectId);
+        assertThat(dto.name()).isEqualTo("ACME GMBH");
+        assertThat(dto.type()).isEqualTo("APPLICANT");
+        assertThat(dto.id()).isEqualTo(rule.getId().toString());
+    }
 }

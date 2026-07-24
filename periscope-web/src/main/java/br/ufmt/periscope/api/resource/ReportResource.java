@@ -3,7 +3,7 @@ package br.ufmt.periscope.api.resource;
 import br.ufmt.periscope.api.dto.ReportDTO;
 import br.ufmt.periscope.api.dto.ReportItemDTO;
 import br.ufmt.periscope.api.security.ApiSecuritySupport;
-import br.ufmt.periscope.compat.chart.ChartSeries;
+import br.ufmt.periscope.report.ChartSeries;
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.User;
 import br.ufmt.periscope.report.ApplicationDateReport;

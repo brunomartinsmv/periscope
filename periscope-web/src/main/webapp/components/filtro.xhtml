@@ -30,7 +30,7 @@
                     <p:selectOneMenu value="#{controller.filtro.selecionaData}" id="selDate"  valueChangeListener="#{controller.selectListener}">
                         <f:selectItem itemLabel="#{msgs['publication.date']}" itemValue="1" /> 
                         <f:selectItem itemLabel="#{msgs['application.date']}" itemValue="2" />  
-                        <p:ajax event="change" update=":#{p:component('filtroId')}"/>
+                        <p:ajax event="change" update=":#{p:resolveFirstComponentWithId('filtroId', view).clientId}"/>
                     </p:selectOneMenu>
 
                     <h:outputText value="#{msgs['from']}:" />
@@ -43,13 +43,13 @@
 
                     <p:outputLabel value="#{msgs['inventors']}:" rendered="#{inventorAutoComplete}"/> 
                     <p:autoComplete rendered="#{inventorAutoComplete}" minQueryLength="1" global="false" value="#{mainIPCController.filtro.inventorName}" completeMethod="#{mainInventorController.getInventors}" effect="fade">
-                        <p:ajax update=":#{p:component('tudo')},@this" event="itemSelect"
+                        <p:ajax update=":#{p:resolveFirstComponentWithId('tudo', view).clientId},@this" event="itemSelect"
                                 listener="#{mainIPCController.update()}" />
                     </p:autoComplete>
 
                     <p:outputLabel value="#{msgs['applicants']}:" rendered="#{applicantAutoComplete}"/> 
                     <p:autoComplete rendered="#{applicantAutoComplete}" minQueryLength="1" global="false" value="#{mainIPCController.filtro.applicantName}" completeMethod="#{report.getApplicants}" effect="fade">
-                        <p:ajax update=":#{p:component('tudo')},@this" event="itemSelect"
+                        <p:ajax update=":#{p:resolveFirstComponentWithId('tudo', view).clientId},@this" event="itemSelect"
                                 listener="#{mainIPCController.update()}"/>
                     </p:autoComplete>
 
@@ -72,7 +72,7 @@
                 <h:panelGrid rendered="#{ipcBooleanCheckBox}" columns="4" style="margin: 20px" >
                     <p:selectBooleanCheckbox id="klass" itemLabel="#{msgs['class']}"
                                              value="#{mainIPCController.klass}">
-                        <p:ajax update="subKlass,group,subGroup,:#{p:component('tudo')}"
+                        <p:ajax update="subKlass,group,subGroup,:#{p:resolveFirstComponentWithId('tudo', view).clientId}"
                                 listener="#{mainIPCController.update()}" />
                     </p:selectBooleanCheckbox>
 
@@ -80,14 +80,14 @@
                                              disabled="#{!mainIPCController.klass}"
                                              itemLabel="#{msgs['subclass']}"
                                              value="#{mainIPCController.subKlass}">
-                        <p:ajax update="group,subGroup,:#{p:component('tudo')}"
+                        <p:ajax update="group,subGroup,:#{p:resolveFirstComponentWithId('tudo', view).clientId}"
                                 listener="#{mainIPCController.update()}" />
                     </p:selectBooleanCheckbox>
 
                     <p:selectBooleanCheckbox id="group"
                                              disabled="#{!mainIPCController.klass or !mainIPCController.subKlass}"
                                              itemLabel="#{msgs['group']}" value="#{mainIPCController.group}">
-                        <p:ajax update="subGroup,:#{p:component('tudo')}"
+                        <p:ajax update="subGroup,:#{p:resolveFirstComponentWithId('tudo', view).clientId}"
                                 listener="#{mainIPCController.update()}" />
                     </p:selectBooleanCheckbox>
 
@@ -95,7 +95,7 @@
                                              disabled="#{!mainIPCController.klass or !mainIPCController.subKlass or !mainIPCController.group}"
                                              itemLabel="#{msgs['subgroup']}"
                                              value="#{mainIPCController.subGroup}">
-                        <p:ajax update=":#{p:component('tudo')}"
+                        <p:ajax update=":#{p:resolveFirstComponentWithId('tudo', view).clientId}"
                                 listener="#{mainIPCController.update()}" />
                     </p:selectBooleanCheckbox>
                 </h:panelGrid>
@@ -106,7 +106,7 @@
                     </p:selectBooleanCheckbox>
                     <br />
 
-                    <p:commandButton action="#{controller.refreshChart()}" update=":#{p:component('tudo')}" value="#{msgs['update']}"></p:commandButton>
+                    <p:commandButton action="#{controller.refreshChart()}" update=":#{p:resolveFirstComponentWithId('tudo', view).clientId}" value="#{msgs['update']}"></p:commandButton>
                     <br/>
                 </h:panelGrid>
             </p:tab>

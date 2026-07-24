@@ -114,26 +114,27 @@ public class PatentIndexer {
             if (writer != null) {
                 if (pas != null) {
                     for (String a : pas) {
-                        Document doc = new Document();
-                        doc.add(new TextField("id", project.getId().toString() + "app" + String.valueOf(a.hashCode()), Field.Store.YES));
-                        writer.deleteDocuments(new Term("id", doc.get("id")));
+                        // Must use StringField for "id" — same index options as index()
+                        writer.deleteDocuments(new Term("id",
+                                project.getId().toString() + "app" + String.valueOf(a.hashCode())));
                     }
                     Document doc = new Document();
-                    doc.add(new TextField("id", project.getId().toString() + "app" + String.valueOf(pa.hashCode()), Field.Store.YES));
+                    doc.add(new StringField("id", project.getId().toString() + "app" + String.valueOf(pa.hashCode()), Field.Store.YES));
                     doc.add(new TextField("applicant", pa, Field.Store.YES));
+                    doc.add(new StringField("tokens", fs.getAnalyzed("applicant", pa), Field.Store.YES));
                     doc.add(new StringField("project", project.getId().toString(), Field.Store.YES));
                     writer.deleteDocuments(new Term("id", doc.get("id")));
                     writer.addDocument(doc);
                 }
                 if (invs != null) {
                     for (String a : invs) {
-                        Document doc = new Document();
-                        doc.add(new TextField("id", project.getId().toString() + "inv" + String.valueOf(a.hashCode()), Field.Store.YES));
-                        writer.deleteDocuments(new Term("id", doc.get("id")));
+                        writer.deleteDocuments(new Term("id",
+                                project.getId().toString() + "inv" + String.valueOf(a.hashCode())));
                     }
                     Document doc = new Document();
-                    doc.add(new TextField("id", project.getId().toString() + "inv" + String.valueOf(inv.hashCode()), Field.Store.YES));
+                    doc.add(new StringField("id", project.getId().toString() + "inv" + String.valueOf(inv.hashCode()), Field.Store.YES));
                     doc.add(new TextField("inventor", inv, Field.Store.YES));
+                    doc.add(new StringField("tokens", fs.getAnalyzed("inventor", inv), Field.Store.YES));
                     doc.add(new StringField("project", project.getId().toString(), Field.Store.YES));
                     writer.deleteDocuments(new Term("id", doc.get("id")));
                     writer.addDocument(doc);

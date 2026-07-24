@@ -8,17 +8,13 @@ import jakarta.inject.Named;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 
-import br.ufmt.periscope.compat.chart.CartesianChartModel;
-import br.ufmt.periscope.compat.chart.ChartSeries;
-
+import br.ufmt.periscope.report.ChartSeries;
 import br.ufmt.periscope.report.MainIPCReport;
 import br.ufmt.periscope.report.Pair;
 import jakarta.faces.event.ValueChangeEvent;
 
 /**
- * - @Named<BR/>
- * - @ViewScoped<BR/>
- * Classe controller responsável por operações de visualização relacionadas à classificação IPC
+ * Controller responsável por operações de visualização relacionadas à classificação IPC.
  */
 @Named
 @ViewScoped
@@ -33,9 +29,6 @@ public class MainIPCController extends GenericController {
     private boolean description;
     private int classification;
 
-    /**
-     * Método pós construção que foi sobrescrito para iniciar parametros do controller
-     */
     @PostConstruct
     @Override
     public void init() {
@@ -46,200 +39,127 @@ public class MainIPCController extends GenericController {
         this.setClassification(1);
         setLimit(8);
         super.init();
-        
     }
 
-    /**
-     * Método que atualiza os valores dos filtros existentes para os gráficos da classificação IPC
-     */
     public void update() {
         if (!klass) {
-            // classe nao esta selecionada
-            // buscar secao
             subKlass = false;
             group = false;
             subGroup = false;
         } else if (!subKlass) {
-            // classe selecionada e subclasse nao esta
-            // buscar classe
             group = false;
             subGroup = false;
         } else if (!group) {
-            // classe e subclasse selecionadas e grupo nao selecionado
-            // buscar subclasse
             subGroup = false;
-        } else if (!subGroup) {
-            // classe, subclasse e grupo selecionado, subgrupo nao selecioando
-            // buscar grupo
-        } else {
-            // tudo selecionado
-            // buscar subgrupo
         }
 
         refreshChart();
     }
 
-    /**
-     * Método responsável pela atualização dos gráficos relacionados à classificação IPC
-     */
     @Override
     public void refreshChart() {
-        setModel(new CartesianChartModel());
         ChartSeries series = report.ipcCount(getCurrentProject(), klass, subKlass,
                 group, subGroup, getLimit(), getFiltro(), this.getClassification());
-
-        getModel().addSeries(series);
+        applyBarChart(series, series.getLabel(), true);
 
         setPairs(new ArrayList<Pair>());
 
         this.description = false;
-        String description;
+        String descriptionText;
         for (Object key : series.getData().keySet()) {
             Number value = series.getData().get(key);
             String ipc = (String) key;
-            description = null;
+            descriptionText = null;
             if (ipc != null && ipc.length() == 1) {
                 this.description = true;
                 switch (ipc.charAt(0)) {
                     case 'A':
-                        description = "Necessidades Humanas";
+                        descriptionText = "Necessidades Humanas";
                         break;
                     case 'B':
-                        description = "Operações de Processamento; Transporte";
+                        descriptionText = "Operações de Processamento; Transporte";
                         break;
                     case 'C':
-                        description = "Química e Metalurgia";
+                        descriptionText = "Química e Metalurgia";
                         break;
                     case 'D':
-                        description = "Têxteis e Papel";
+                        descriptionText = "Têxteis e Papel";
                         break;
                     case 'F':
-                        description = "Engenharia Mecânica; Iluminação; Aquecimento; Arma";
+                        descriptionText = "Engenharia Mecânica; Iluminação; Aquecimento; Arma";
                         break;
                     case 'E':
-                        description = "Construções Fixas";
+                        descriptionText = "Construções Fixas";
                         break;
                     case 'G':
-                        description = "Física";
+                        descriptionText = "Física";
                         break;
                     case 'H':
-                        description = "Eletricidade";
+                        descriptionText = "Eletricidade";
                         break;
                     case 'Y':
-                        description = "";
+                        descriptionText = "";
+                        break;
+                    default:
                         break;
                 }
             }
-            getPairs().add(new Pair(key, value, description));
+            getPairs().add(new Pair(key, value, descriptionText));
         }
 
         Collections.reverse(getPairs());
     }
 
-    /**
-     *
-     * @return
-     */
     public boolean isKlass() {
         return klass;
     }
 
-    /**
-     *
-     * @param event
-     */
-    public void classificationListener(ValueChangeEvent event){
+    public void classificationListener(ValueChangeEvent event) {
         int newVal = (Integer) event.getNewValue();
         this.setClassification(newVal);
     }
 
-    /**
-     *
-     * @param klass
-     */
     public void setKlass(boolean klass) {
         this.klass = klass;
     }
 
-    /**
-     *
-     * @return
-     */
     public boolean isSubKlass() {
         return subKlass;
     }
 
-    /**
-     *
-     * @param subKlass
-     */
     public void setSubKlass(boolean subKlass) {
         this.subKlass = subKlass;
     }
 
-    /**
-     *
-     * @return
-     */
     public boolean isGroup() {
         return group;
     }
 
-    /**
-     *
-     * @param group
-     */
     public void setGroup(boolean group) {
         this.group = group;
     }
 
-    /**
-     *
-     * @return
-     */
     public boolean isSubGroup() {
         return subGroup;
     }
 
-    /**
-     *
-     * @param subGroup
-     */
     public void setSubGroup(boolean subGroup) {
         this.subGroup = subGroup;
     }
 
-    /**
-     *
-     * @return
-     */
     public boolean isDescription() {
         return description;
     }
 
-    /**
-     *
-     * @param description
-     */
     public void setDescription(boolean description) {
         this.description = description;
     }
 
-    /**
-     *
-     * @return
-     */
     public int getClassification() {
         return classification;
     }
 
-    /**
-     *
-     * @param classification
-     */
     public void setClassification(int classification) {
         this.classification = classification;
     }
-    
-    
 }

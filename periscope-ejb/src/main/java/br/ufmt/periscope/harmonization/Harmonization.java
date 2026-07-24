@@ -2,6 +2,7 @@ package br.ufmt.periscope.harmonization;
 
 import br.ufmt.periscope.indexer.PatentIndexer;
 import br.ufmt.periscope.model.Patent;
+import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.Rule;
 import dev.morphia.Datastore;
 import dev.morphia.UpdateOptions;
@@ -10,7 +11,6 @@ import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import java.util.ArrayList;
-import org.bson.types.ObjectId;
 
 import static dev.morphia.query.filters.Filters.eq;
 
@@ -53,19 +53,20 @@ public class Harmonization {
      * @param rule
      */
     private void applyApplicantRule(Rule rule) {
-        ObjectId projectId = rule.getProject().getId();
+        Project project = rule.getProject();
         if (rule.getCountry() != null) {
             rule.getCountry().setStates(null);
         }
         String[] applicants = rule.getSubstitutions().toArray(new String[0]);
         for (String applicant : applicants) {
             ds.find(Patent.class)
-                    .filter(eq("project.$id", projectId), eq("applicants.name", applicant))
+                    .filter(eq("project", project), eq("applicants.name", applicant))
                     .update(new UpdateOptions().multi(true),
                             UpdateOperators.set("applicants.$.name", rule.getName()),
                             UpdateOperators.set("applicants.$.harmonized", true),
                             UpdateOperators.set("applicants.$.acronym", rule.getAcronym()),
-                            UpdateOperators.set("applicants.$.nature", rule.getNature()),
+                            // Applicant uses "type" (ApplicantType); Rule still stores it as "nature"
+                            UpdateOperators.set("applicants.$.type", rule.getNature()),
                             UpdateOperators.set("applicants.$.country", rule.getCountry()),
                             UpdateOperators.set("applicants.$.state", rule.getState()));
         }
@@ -78,20 +79,20 @@ public class Harmonization {
      * @param rule
      */
     private void applyInventorRule(Rule rule) {
-        ObjectId projectId = rule.getProject().getId();
+        Project project = rule.getProject();
         if (rule.getCountry() != null) {
             rule.getCountry().setStates(null);
         }
         String[] inventors = rule.getSubstitutions().toArray(new String[0]);
         for (String inventor : inventors) {
             ds.find(Patent.class)
-                    .filter(eq("project.$id", projectId), eq("inventors.name", inventor))
+                    .filter(eq("project", project), eq("inventors.name", inventor))
                     .update(new UpdateOptions().multi(true),
                             UpdateOperators.set("inventors.$.name", rule.getName()),
                             UpdateOperators.set("inventors.$.harmonized", true),
                             UpdateOperators.set("inventors.$.country", rule.getCountry()),
                             UpdateOperators.set("inventors.$.state", rule.getState()),
-                            UpdateOperators.set("inventors.$.nature", rule.getNature()),
+                            // Inventor has no nature/type field — only name/acronym/geo/harmonized
                             UpdateOperators.set("inventors.$.acronym", rule.getAcronym()));
         }
 

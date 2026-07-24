@@ -2,6 +2,7 @@ package br.ufmt.periscope.controller;
 
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.qualifier.CurrentProject;
+import br.ufmt.periscope.report.ChartSeries;
 import br.ufmt.periscope.report.Pair;
 import br.ufmt.periscope.repository.PatentRepository;
 import br.ufmt.periscope.util.Filters;
@@ -11,11 +12,12 @@ import java.util.List;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.event.ValueChangeEvent;
 import jakarta.inject.Inject;
-import br.ufmt.periscope.compat.chart.CartesianChartModel;
+import org.primefaces.model.charts.bar.BarChartModel;
+import org.primefaces.model.charts.line.LineChartModel;
 
 /**
- * Modelo abstrato generico dos controllers<BR/>
- * Quase todos os controllers de gráficos do sistema extendem essa classe
+ * Modelo abstrato generico dos controllers.<BR/>
+ * Quase todos os controllers de gráficos do sistema extendem essa classe.
  */
 public abstract class GenericController implements Serializable {
 
@@ -26,7 +28,9 @@ public abstract class GenericController implements Serializable {
     Project currentProject;
     private @Inject
     PatentRepository patentRepository;
-    private CartesianChartModel model;
+    private BarChartModel barModel = new BarChartModel();
+    private LineChartModel lineModel = new LineChartModel();
+    private boolean chartEmpty = true;
     private Date minDate, maxDate;
     private List<Pair> pairs;
     private @Inject
@@ -34,8 +38,8 @@ public abstract class GenericController implements Serializable {
     private int limit = 5;
 
     /**
-     * Método pós construtor da classe abstrata generica dos controllers<BR/>
-     * Atualiza os parametros do filtro, o intervalo de datas existentes no projeto e o gráfico sendo mostrado atualmente
+     * Método pós construtor da classe abstrata generica dos controllers.<BR/>
+     * Atualiza os parametros do filtro, o intervalo de datas existentes no projeto e o gráfico sendo mostrado atualmente.
      */
     @PostConstruct
     public void init() {
@@ -50,151 +54,118 @@ public abstract class GenericController implements Serializable {
     }
 
     /**
-     * Método abstrato que atualiza os gráficos do sistema<BR/>
-     * Apenas o cabeçalho definido nesta classe
+     * Método abstrato que atualiza os gráficos do sistema.
      */
     public abstract void refreshChart();
 
     /**
-     * 
-     * @return
+     * Builds a horizontal or vertical bar chart from a report series.
      */
+    protected void applyBarChart(ChartSeries series, String title, boolean horizontal) {
+        this.barModel = ChartModels.bar(series, title, horizontal);
+        this.chartEmpty = ChartModels.isEmpty(series);
+    }
+
+    /**
+     * Builds a line chart from a report series.
+     */
+    protected void applyLineChart(ChartSeries series, String title) {
+        this.lineModel = ChartModels.line(series, title);
+        this.chartEmpty = ChartModels.isEmpty(series);
+    }
+
     public PatentRepository getPatentRepository() {
         return patentRepository;
     }
 
-    /**
-     * 
-     * @param patentRepository
-     */
     public void setPatentRepository(PatentRepository patentRepository) {
         this.patentRepository = patentRepository;
     }
 
-    /**
-     * 
-     * @return
-     */
     public Date getMinDate() {
         return minDate;
     }
 
-    /**
-     * 
-     * @param minDate
-     */
     public void setMinDate(Date minDate) {
         this.minDate = minDate;
     }
 
-    /**
-     * 
-     * @return
-     */
     public Date getMaxDate() {
         return maxDate;
     }
 
-    /**
-     * 
-     * @param maxDate
-     */
     public void setMaxDate(Date maxDate) {
         this.maxDate = maxDate;
     }
 
-    /**
-     * 
-     * @return
-     */
     public Project getCurrentProject() {
         return currentProject;
     }
 
-    /**
-     * 
-     * @param currentProject
-     */
     public void setCurrentProject(Project currentProject) {
         this.currentProject = currentProject;
     }
 
-    /**
-     * 
-     * @return
-     */
-    public CartesianChartModel getModel() {
-        return model;
+    public BarChartModel getBarModel() {
+        return barModel;
     }
 
-    /**
-     * 
-     * @param model
-     */
-    public void setModel(CartesianChartModel model) {
-        this.model = model;
+    public void setBarModel(BarChartModel barModel) {
+        this.barModel = barModel != null ? barModel : new BarChartModel();
     }
 
-    /**
-     * 
-     * @return
-     */
+    public LineChartModel getLineModel() {
+        return lineModel;
+    }
+
+    public void setLineModel(LineChartModel lineModel) {
+        this.lineModel = lineModel != null ? lineModel : new LineChartModel();
+    }
+
+    public boolean isChartEmpty() {
+        return chartEmpty;
+    }
+
+    public void setChartEmpty(boolean empty) {
+        this.chartEmpty = empty;
+    }
+
+    public boolean isHasData() {
+        return !chartEmpty;
+    }
+
     public List<Pair> getPairs() {
         return pairs;
     }
 
-    /**
-     * 
-     * @param pairs
-     */
     public void setPairs(List<Pair> pairs) {
         this.pairs = pairs;
     }
 
-    /**
-     * 
-     * @return
-     */
     public Filters getFiltro() {
         return filtro;
     }
 
-    /**
-     * 
-     * @param filtro
-     */
     public void setFiltro(Filters filtro) {
         this.filtro = filtro;
     }
 
-    /**
-     * 
-     * @return
-     */
     public int getLimit() {
         return limit;
     }
 
-    /**
-     * 
-     * @param limit
-     */
     public void setLimit(int limit) {
         this.limit = limit;
     }
 
     /**
-     * 
-     * Filter's change listener
-     * @param event
+     * Filter's change listener.
      */
     public void selectListener(ValueChangeEvent event) {
-        int sel = getFiltro().getSelecionaData();
-        int newSel=  (Integer)event.getNewValue();
+        int newSel = (Integer) event.getNewValue();
         getFiltro().setInicio(getPatentRepository().getMinDate(getCurrentProject(), newSel));
         getFiltro().setFim(getPatentRepository().getMaxDate(getCurrentProject(), newSel));
         setMinDate(getFiltro().getInicio());
         setMaxDate(getFiltro().getFim());
-
     }
 }

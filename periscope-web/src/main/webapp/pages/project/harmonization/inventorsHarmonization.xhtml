@@ -38,7 +38,7 @@
                     <p:selectBooleanCheckbox id="campo" 
                                              value="#{pa.selected}" >
                         <p:ajax event="change" update=":tabView:formAl:selectedInventors,@this,:tabView:formAl:newRule,
-                                :#{p:component('panelSugestions')}" 
+                                :#{p:resolveFirstComponentWithId('panelSugestions', view).clientId}" 
                                 listener="#{inventorHarmonizationController.onSelectInventor(pa)}"/>
                     </p:selectBooleanCheckbox>	
                 </p:column>		
@@ -53,7 +53,8 @@
                 </p:column>
                 <p:column headerText="#{msgs['actions']}">
                     <center>
-                        <p:commandLink id="showDocs" value="#{msgs['show.docs']}" update=":tabView:formAl:inventorDocs"
+                        <p:commandLink id="showDocs" value="#{msgs['show.docs']}"
+                                       update=":#{p:resolveFirstComponentWithId('inventorDocs', view).clientId}"
                                        oncomplete="inventorDocsDialog.show()" 
                                        action="#{inventorHarmonizationController.loadDocs(pa.name)}"
                                        style="color:white;margin-right: 10px" styleClass="btn btn-inverse"/>				
@@ -100,7 +101,7 @@
                 <p:column>
                     <p:commandButton icon="ui-icon-closethick" action="#{inventorHarmonizationController.unselect(pa)}"
                                      update = ":tabView:formAl:inventors,:tabView:formAl:selectedInventors,:tabView:formAl:newRule,
-                                     :#{p:component('panelSugestions')}"
+                                     :#{p:resolveFirstComponentWithId('panelSugestions', view).clientId}"
                                      ajax="true"
                                      />
                 </p:column> 

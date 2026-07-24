@@ -1,12 +1,12 @@
-package br.ufmt.periscope.compat.chart;
+package br.ufmt.periscope.report;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Compat shim for PrimeFaces 3.x {@code ChartSeries} (removed in PF Charts.js era).
- * Full chart redesign deferred to Fase 5.
+ * Ordered label→value series produced by report aggregations (EJB),
+ * consumed by the JSF chart builders and the REST report API.
  */
 public class ChartSeries implements Serializable {
 
@@ -36,5 +36,9 @@ public class ChartSeries implements Serializable {
 
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    public boolean isEmpty() {
+        return data.isEmpty();
     }
 }

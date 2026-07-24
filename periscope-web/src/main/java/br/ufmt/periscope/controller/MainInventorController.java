@@ -5,16 +5,13 @@ import java.util.Collections;
 import jakarta.inject.Named;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
-import br.ufmt.periscope.compat.chart.CartesianChartModel;
-import br.ufmt.periscope.compat.chart.ChartSeries;
+import br.ufmt.periscope.report.ChartSeries;
 import br.ufmt.periscope.report.MainInventorReport;
 import br.ufmt.periscope.report.Pair;
 import java.util.List;
 
 /**
- * - @Named<BR/>
- * - @ViewScoped<BR/>
- * Classe controller responsável por operações de visualização relacionadas aos inventores
+ * Controller responsável por operações de visualização relacionadas aos inventores.
  */
 @Named
 @ViewScoped
@@ -23,19 +20,12 @@ public class MainInventorController extends GenericController {
     private @Inject
     MainInventorReport report;
 
-    /**
-     * Método responsável pela atualização dos gráficos relacionados aos principais inventores
-     */
     @Override
     public void refreshChart() {
-
-        setModel(new CartesianChartModel());
         ChartSeries series = report.InventorDateSeries(getCurrentProject(), getLimit(), getFiltro());
-
-        getModel().addSeries(series);
+        applyBarChart(series, series.getLabel(), true);
 
         setPairs(new ArrayList<Pair>());
-
         for (Object key : series.getData().keySet()) {
             Number value = series.getData().get(key);
             getPairs().add(new Pair(key, value));
@@ -45,12 +35,9 @@ public class MainInventorController extends GenericController {
     }
 
     /**
-     * Lista de inventores dado um filtro
-     * @param query String que deverá começar o nome de um inventor
-     * @return lista de inventores do projeto nas quais os nomes começam com o paramtro passado
+     * Lista de inventores dado um filtro.
      */
     public List<String> getInventors(String query) {
-        List<String> teste = report.getRepo().getInventors(getCurrentProject(), query);
-        return teste;
+        return report.getRepo().getInventors(getCurrentProject(), query);
     }
 }
