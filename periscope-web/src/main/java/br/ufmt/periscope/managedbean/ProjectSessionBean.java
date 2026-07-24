@@ -2,13 +2,12 @@ package br.ufmt.periscope.managedbean;
 
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.qualifier.CurrentProject;
-import com.github.jmkgreen.morphia.Datastore;
-import com.github.jmkgreen.morphia.mapping.lazy.DatastoreHolder;
-import com.github.jmkgreen.morphia.query.Query;
+import dev.morphia.Datastore;
+import static dev.morphia.query.filters.Filters.eq;
 import java.io.Serializable;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.bson.types.ObjectId;
 
@@ -18,18 +17,14 @@ public class ProjectSessionBean implements Serializable {
 
     private static final long serialVersionUID = -202445705543842694L;
 
+    @Inject
     private Datastore ds;
     private Project currentProject;
 
-    @PostConstruct
-    public void init() {
-        ds = DatastoreHolder.getInstance().get();
-    }
-
     public String openProject(String idProject) {
-        Query<Project> query = ds.createQuery(Project.class);
-        query.retrievedFields(false, "patents").field("_id").equal(new ObjectId(idProject));
-        currentProject = query.asList().get(0);
+        currentProject = ds.find(Project.class)
+                .filter(eq("_id", new ObjectId(idProject)))
+                .first();
 
         if (isProjectSelected()) {
             return "projectHome";

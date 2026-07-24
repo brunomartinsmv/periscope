@@ -14,9 +14,9 @@ import br.ufmt.periscope.qualifier.CurrentProject;
 import br.ufmt.periscope.repository.CountryRepository;
 import br.ufmt.periscope.repository.PatentRepository;
 import br.ufmt.periscope.util.ResourcesLazy;
-import com.mongodb.gridfs.GridFS;
-import com.mongodb.gridfs.GridFSDBFile;
-import com.mongodb.gridfs.GridFSInputFile;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.model.Filters;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -65,7 +65,7 @@ public class PatentController {
     private UploadedFile file;
     private StreamedContent temporaryPresentationFile;
     private StreamedContent temporaryPatentInfo;
-    private GridFS fs;
+    private GridFSBucket fs;
     private @Inject
     ResourcesLazy lazyResources;
     private @Inject
@@ -372,9 +372,9 @@ public class PatentController {
      */
     public void downloadFile(Files file) throws IOException {
         openFs();
-        GridFSDBFile gfile = fs.findOne(file.getId());
+        GridFSFile gfile = fs.find(Filters.eq("_id", file.getId())).first();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        long writeTo = gfile.writeTo(out);
+        fs.downloadToStream(file.getId(), out);
         byte[] data = out.toByteArray();
         ByteArrayInputStream istream = new ByteArrayInputStream(data);
         InputStream arquivo = istream;
@@ -412,9 +412,8 @@ public class PatentController {
      */
     public InputStream filesToInputStream(Files file) throws IOException {
         openFs();
-        GridFSDBFile gfile = fs.findOne(file.getId());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        long writeTo = gfile.writeTo(out);
+        fs.downloadToStream(file.getId(), out);
         byte[] data = out.toByteArray();
         ByteArrayInputStream istream = new ByteArrayInputStream(data);
         InputStream arquivo = istream;
@@ -469,20 +468,22 @@ public class PatentController {
         openFs();
         Files f = null;
         if (temporaryPresentationFile == null && selectedPatent.getPresentationFile() != null) {
-            fs.remove(selectedPatent.getPresentationFile().getId());
+            fs.delete(selectedPatent.getPresentationFile().getId());
             closeFs();
             return null;
         } else if (selectedPatent.getPresentationFile() != null) {
-            fs.remove(selectedPatent.getPresentationFile().getId());
+            fs.delete(selectedPatent.getPresentationFile().getId());
         }
         if (temporaryPresentationFile != null) {
-            GridFSInputFile gfsFiles = fs.createFile(temporaryPresentationFile.getStream().get());
-            gfsFiles.setFilename(temporaryPresentationFile.getName());
-            gfsFiles.setContentType(temporaryPresentationFile.getContentType());
-            gfsFiles.save();
+            ObjectId id = fs.uploadFromStream(
+                    temporaryPresentationFile.getName(),
+                    temporaryPresentationFile.getStream().get(),
+                    new com.mongodb.client.gridfs.model.GridFSUploadOptions()
+                            .metadata(new org.bson.Document("contentType",
+                                    temporaryPresentationFile.getContentType())));
 
             f = lazyResources.getFiles();
-            f.setId((ObjectId) gfsFiles.getId());
+            f.setId(id);
         }
         closeFs();
         return f;
@@ -534,20 +535,22 @@ public class PatentController {
         openFs();
         Files f = null;
         if (temporaryPatentInfo == null && selectedPatent.getPatentInfo() != null) {
-            fs.remove(selectedPatent.getPatentInfo().getId());
+            fs.delete(selectedPatent.getPatentInfo().getId());
             closeFs();
             return null;
         } else if (selectedPatent.getPatentInfo() != null) {
-            fs.remove(selectedPatent.getPatentInfo().getId());
+            fs.delete(selectedPatent.getPatentInfo().getId());
         }
         if (temporaryPatentInfo != null) {
-            GridFSInputFile gfsFiles = fs.createFile(temporaryPatentInfo.getStream().get());
-            gfsFiles.setFilename(temporaryPatentInfo.getName());
-            gfsFiles.setContentType(temporaryPatentInfo.getContentType());
-            gfsFiles.save();
+            ObjectId id = fs.uploadFromStream(
+                    temporaryPatentInfo.getName(),
+                    temporaryPatentInfo.getStream().get(),
+                    new com.mongodb.client.gridfs.model.GridFSUploadOptions()
+                            .metadata(new org.bson.Document("contentType",
+                                    temporaryPatentInfo.getContentType())));
 
             f = lazyResources.getFiles();
-            f.setId((ObjectId) gfsFiles.getId());
+            f.setId(id);
         }
         closeFs();
         return f;

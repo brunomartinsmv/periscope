@@ -20,7 +20,7 @@ import br.ufmt.periscope.model.User;
 import br.ufmt.periscope.model.UserLevel;
 import br.ufmt.periscope.qualifier.LoggedUser;
 
-import com.github.jmkgreen.morphia.Datastore;
+import dev.morphia.Datastore;
 
 /**
  * - @Named<BR/>
@@ -56,7 +56,9 @@ public class UserController {
         HttpServletRequest req = (HttpServletRequest) context.getExternalContext().getRequest();
         if (req.getParameter("userId") != null) {
             editing = true;
-            user = ds.get(User.class, new ObjectId(req.getParameter("userId")));
+            user = ds.find(User.class)
+                    .filter(dev.morphia.query.filters.Filters.eq("_id", new ObjectId(req.getParameter("userId"))))
+                    .first();
 
         }
     }
@@ -66,7 +68,9 @@ public class UserController {
      * @return Página de Lista de Usuários
      */
     public String save() {
-        User existingUser = ds.find(User.class).field("username").equal(user.getUsername()).get();
+        User existingUser = ds.find(User.class)
+                .filter(dev.morphia.query.filters.Filters.eq("username", user.getUsername()))
+                .first();
         boolean hasUniqueUsername = false;
         if (editing) {
             if (existingUser == null) {
@@ -100,7 +104,9 @@ public class UserController {
      * @return Página de Lista de Usuários
      */
     public String delete(String id) {
-        ds.delete(User.class, new ObjectId(id));
+        ds.find(User.class)
+                .filter(dev.morphia.query.filters.Filters.eq("_id", new ObjectId(id)))
+                .delete();
         Flash flash = FacesContext.getCurrentInstance().
                 getExternalContext().getFlash();
         flash.put("info", "Deletado com sucesso");
@@ -113,7 +119,7 @@ public class UserController {
      */
     public DataModel<User> getUsers() {
         if (users == null) {
-            users = new ListDataModel<User>(ds.find(User.class).asList());
+            users = new ListDataModel<User>(ds.find(User.class).iterator().toList());
         }
         return users;
     }

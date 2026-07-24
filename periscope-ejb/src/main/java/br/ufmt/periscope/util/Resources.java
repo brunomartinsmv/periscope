@@ -1,77 +1,76 @@
 package br.ufmt.periscope.util;
 
-import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.spi.InjectionPoint;
 import jakarta.inject.Singleton;
 
-import com.github.jmkgreen.morphia.Datastore;
-import com.github.jmkgreen.morphia.Morphia;
-import com.github.jmkgreen.morphia.mapping.lazy.DatastoreHolder;
-import com.mongodb.DB;
-import com.mongodb.Mongo;
-import com.mongodb.gridfs.GridFS;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSBuckets;
+
+import br.ufmt.periscope.indexer.resources.analysis.CommonDescriptor;
+import br.ufmt.periscope.model.ApplicantType;
+import br.ufmt.periscope.model.Country;
+import br.ufmt.periscope.model.Files;
+import br.ufmt.periscope.model.Patent;
+import br.ufmt.periscope.model.Project;
+import br.ufmt.periscope.model.Rule;
+import br.ufmt.periscope.model.User;
+import dev.morphia.Datastore;
+import dev.morphia.Morphia;
+import dev.morphia.mapping.MapperOptions;
 
 /**
- * This class uses CDI to alias Java EE resources, such as the persistence
- * context, to CDI beans
- *
- * <p>
- * Example injection on a managed bean field:
- * </p>
- *
- * <pre>
- * &#064;Inject
- * private EntityManager em;
- * </pre>
+ * CDI producers for MongoDB / Morphia / GridFS (Morphia 2 + driver sync 5).
  */
+@ApplicationScoped
 public class Resources {
 
-    //@Produces
-    //@PersistenceContext
-    //private EntityManager em;
-    @Singleton
+    public static final String DEFAULT_URI = "mongodb://localhost:27017";
+    public static final String DEFAULT_DATABASE = "Periscope";
+
     @Produces
-    private Mongo createMongo() {
-        try {
-            return new Mongo();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-            return null;
-        }
+    @Singleton
+    public MongoClient createMongoClient() {
+        String uri = System.getenv().getOrDefault("MONGODB_URI", DEFAULT_URI);
+        return MongoClients.create(uri);
     }
 
     @Produces
-    private Morphia morphia = new Morphia();
+    @ApplicationScoped
+    public Datastore mongoDs(MongoClient client) {
+        String database = System.getenv().getOrDefault("MONGODB_DATABASE", DEFAULT_DATABASE);
+        MapperOptions options = MapperOptions.builder()
+                .storeEmpties(true)
+                .build();
+        Datastore ds = Morphia.createDatastore(client, database, options);
+        ds.getMapper().map(
+                User.class,
+                Project.class,
+                Patent.class,
+                Rule.class,
+                Files.class,
+                Country.class,
+                ApplicantType.class,
+                CommonDescriptor.class);
+        ds.ensureIndexes();
+        return ds;
+    }
 
     @Produces
-    public Datastore mongoDs(Mongo mongo, Morphia morphia) {
-        Datastore ds = morphia.createDatastore(mongo, "Periscope");
-        ds.ensureCaps();
-        ds.ensureIndexes();
-        morphia.mapPackage("br.ufmt.periscope.model");
-        DatastoreHolder.getInstance().set(ds);
-        return ds;
+    @ApplicationScoped
+    public GridFSBucket gridFSBucket(MongoClient client) {
+        String database = System.getenv().getOrDefault("MONGODB_DATABASE", DEFAULT_DATABASE);
+        return GridFSBuckets.create(client.getDatabase(database));
     }
 
     @Produces
     public Logger produceLog(InjectionPoint injectionPoint) {
         return Logger.getLogger(injectionPoint.getMember().getDeclaringClass()
                 .getName());
-    }
-
-    @Produces
-    public GridFS produceFs(Logger log) {
-        try {
-            Mongo mongo = new Mongo("localhost", 27017);
-            DB db = mongo.getDB("Periscope");
-            GridFS fs = new GridFS(db);
-            return fs;
-        } catch (Exception e) {
-            log.throwing(Resources.class.getName(), "produceFs", e);
-        }
-        return null;
     }
 }

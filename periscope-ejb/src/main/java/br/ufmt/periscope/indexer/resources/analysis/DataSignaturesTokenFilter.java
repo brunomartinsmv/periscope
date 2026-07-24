@@ -15,7 +15,7 @@ import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
  * @author horgun
  *
  */
-public class DataSignaturesTokenFilter extends TokenFilter {
+public final class DataSignaturesTokenFilter extends TokenFilter {
     
     public class Signature {
         private String value;

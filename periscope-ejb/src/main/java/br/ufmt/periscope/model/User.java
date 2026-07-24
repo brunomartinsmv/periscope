@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bson.types.ObjectId;
 
-import com.github.jmkgreen.morphia.annotations.Entity;
-import com.github.jmkgreen.morphia.annotations.Id;
-import com.github.jmkgreen.morphia.annotations.Reference;
+import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Id;
+import dev.morphia.annotations.Reference;
 
 @Entity
 public class User implements Serializable {

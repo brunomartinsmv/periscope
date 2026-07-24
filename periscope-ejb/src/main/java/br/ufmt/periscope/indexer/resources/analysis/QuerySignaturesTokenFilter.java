@@ -14,7 +14,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  * @author horgun
  *
  */
-public class QuerySignaturesTokenFilter extends TokenFilter {
+public final class QuerySignaturesTokenFilter extends TokenFilter {
     
     public class Signature {
         private String value;

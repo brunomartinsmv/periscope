@@ -23,7 +23,7 @@ import br.ufmt.periscope.qualifier.LoggedUser;
 import br.ufmt.periscope.repository.PatentRepository;
 import br.ufmt.periscope.repository.ProjectRepository;
 
-import com.github.jmkgreen.morphia.Datastore;
+import dev.morphia.Datastore;
 import java.net.UnknownHostException;
 
 /**
@@ -61,7 +61,9 @@ public class ProjectController {
         HttpServletRequest req = (HttpServletRequest) context.getExternalContext().getRequest();
         if (req.getParameter("projectId") != null) {
             editing = true;
-            project = ds.get(Project.class, new ObjectId(req.getParameter("projectId")));
+            project = ds.find(Project.class)
+                    .filter(dev.morphia.query.filters.Filters.eq("_id", new ObjectId(req.getParameter("projectId"))))
+                    .first();
 
         }
     }
@@ -74,7 +76,9 @@ public class ProjectController {
         if (selectedUser != null && selectedUser.trim().length() > 0) {
 
             ObjectId key = new ObjectId(selectedUser);
-            User user = ds.get(User.class, key);
+            User user = ds.find(User.class)
+                    .filter(dev.morphia.query.filters.Filters.eq("_id", key))
+                    .first();
             if (user != null) {
 
                 this.project.getObservers().add(user);
@@ -200,7 +204,9 @@ public class ProjectController {
             for (User u : project.getObservers()) {
                 keys.add(u.getId());
             }
-            freeUsers = ds.createQuery(User.class).field("id").notIn(keys).asList();
+            freeUsers = ds.find(User.class)
+                    .filter(dev.morphia.query.filters.Filters.nin("_id", keys))
+                    .iterator().toList();
         }
         return freeUsers;
     }

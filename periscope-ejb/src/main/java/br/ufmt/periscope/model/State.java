@@ -1,6 +1,6 @@
 package br.ufmt.periscope.model;
 
-import com.github.jmkgreen.morphia.annotations.Embedded;
+import dev.morphia.annotations.Embedded;
 import java.io.Serializable;
 
 @Embedded

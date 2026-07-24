@@ -7,10 +7,9 @@ import java.util.List;
 
 import org.bson.types.ObjectId;
 
-import com.github.jmkgreen.morphia.annotations.Embedded;
-import com.github.jmkgreen.morphia.annotations.Entity;
-import com.github.jmkgreen.morphia.annotations.Id;
-import com.github.jmkgreen.morphia.annotations.Reference;
+import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Id;
+import dev.morphia.annotations.Reference;
 
 @Entity
 public class Patent {
@@ -26,33 +25,24 @@ public class Patent {
     @Reference
     private Files patentInfo;
 
-    private @Embedded
-    Classification mainClassification;
-    private @Embedded
-    Classification mainCPCClassification;
-    private @Embedded
-    List<Classification> classifications = new ArrayList<Classification>();
-    private @Embedded
-    List<Classification> cpcClassifications = new ArrayList<Classification>();
-    private @Embedded
-    List<Priority> priorities = new ArrayList<Priority>();
+    private Classification mainClassification;
+    private Classification mainCPCClassification;
+    private List<Classification> classifications = new ArrayList<Classification>();
+    private List<Classification> cpcClassifications = new ArrayList<Classification>();
+    private List<Priority> priorities = new ArrayList<Priority>();
 
     private String language;
 
     private String publicationNumber;
     private Date publicationDate;
-    private @Embedded
-    Country publicationCountry;
+    private Country publicationCountry;
 
     private String applicationNumber;
     private Date applicationDate;
-    private @Embedded
-    Country applicationCountry;
+    private Country applicationCountry;
 
-    private @Embedded
-    List<Applicant> applicants = new ArrayList<Applicant>();
-    private @Embedded
-    List<Inventor> inventors = new ArrayList<Inventor>();
+    private List<Applicant> applicants = new ArrayList<Applicant>();
+    private List<Inventor> inventors = new ArrayList<Inventor>();
 
     private Boolean blacklisted = false;
     private Boolean completed = false;

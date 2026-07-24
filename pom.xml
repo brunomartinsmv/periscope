@@ -20,10 +20,11 @@
       <jakartaee.version>10.0.0</jakartaee.version>
       <primefaces.version>14.0.0</primefaces.version>
       <primefaces.theme.version>1.0.8</primefaces.theme.version>
-      <morphia.version>1.2.3</morphia.version>
-      <lucene.version>6.0.0</lucene.version>
-      <pdfbox.version>1.8.4</pdfbox.version>
-      <poi.version>3.10-beta2</poi.version>
+      <morphia.version>2.4.14</morphia.version>
+      <mongodb.version>5.2.1</mongodb.version>
+      <lucene.version>9.12.0</lucene.version>
+      <pdfbox.version>3.0.3</pdfbox.version>
+      <poi.version>5.3.0</poi.version>
       <jackson.version>2.18.0</jackson.version>
       <commons-io.version>2.16.1</commons-io.version>
       <junit.version>5.11.0</junit.version>
@@ -80,9 +81,14 @@
          </dependency>
 
          <dependency>
-            <groupId>com.github.jmkgreen.morphia</groupId>
-            <artifactId>morphia</artifactId>
+            <groupId>dev.morphia.morphia</groupId>
+            <artifactId>morphia-core</artifactId>
             <version>${morphia.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>${mongodb.version}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -91,7 +97,7 @@
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
+            <artifactId>lucene-analysis-common</artifactId>
             <version>${lucene.version}</version>
          </dependency>
          <dependency>
@@ -110,18 +116,13 @@
             <version>${poi.version}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+         </dependency>
+         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>${pdfbox.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>fontbox</artifactId>
-            <version>${pdfbox.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>jempbox</artifactId>
             <version>${pdfbox.version}</version>
          </dependency>
 

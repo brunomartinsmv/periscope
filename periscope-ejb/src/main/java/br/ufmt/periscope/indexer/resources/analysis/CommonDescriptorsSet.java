@@ -1,6 +1,6 @@
 package br.ufmt.periscope.indexer.resources.analysis;
 
-import com.github.jmkgreen.morphia.Datastore;
+import dev.morphia.Datastore;
 import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -30,8 +30,8 @@ public class CommonDescriptorsSet {
     public boolean contains(String descriptor) {
         List<CommonDescriptor> descriptorSet = ds
                 .find(CommonDescriptor.class)
-                .field("_id").equal(descriptor)
-                .asList();
+                .filter(dev.morphia.query.filters.Filters.eq("_id", descriptor))
+                .iterator().toList();
 
         if (descriptorSet != null && !descriptorSet.isEmpty()) {
             return true;

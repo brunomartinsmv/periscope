@@ -14,7 +14,7 @@ import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
  * @author mattyws
  *
  */
-public class CondenseTokenFilter extends TokenFilter {
+public final class CondenseTokenFilter extends TokenFilter {
 
     private final StringBuilder sb = new StringBuilder();
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);

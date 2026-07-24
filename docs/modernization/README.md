@@ -15,12 +15,11 @@ Plano de atualização tecnológica do sistema Periscope (UFMT), dividido em fas
 
 ## Estado atual (baseline)
 
-- Java 1.6, Java EE 6, JBoss AS 7
-- JSF 2.0 + PrimeFaces 3.4.2
-- Morphia 1.2.3 + MongoDB driver 2.x (API legada)
-- Lucene 6.0.0 (harmonização Fast-Join)
-- EAR multi-módulo (`periscope-ejb`, `periscope-web`, `periscope-ear`)
-- Build quebrado (repositórios HTTP mortos, fixjures indisponível)
+- Java 21, Jakarta EE 10, PrimeFaces 14 (Fases 0–2)
+- Morphia 2.4.14 + mongodb-driver-sync 5.2.1 (Fase 3)
+- Lucene 9.12.0 (harmonização Fast-Join; Fase 4)
+- PDFBox 3.0.3, POI 5.3.0, upload nativo PrimeFaces (Fase 5)
+- EAR multi-módulo (`periscope-ejb`, `periscope-web`, `periscope-ear`) — WAR único na Fase 6
 
 ## Fases e PRs
 
