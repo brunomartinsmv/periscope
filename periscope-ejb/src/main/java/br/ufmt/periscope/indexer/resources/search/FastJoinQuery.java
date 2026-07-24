@@ -11,6 +11,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.MultiTermQuery;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.util.AttributeSource;
 
 /**
@@ -23,8 +24,8 @@ public class FastJoinQuery extends MultiTermQuery{
     private FuzzyTokenSimilarity ts;
 
     public FastJoinQuery(String field, String query, float tokenThreshold, float editThreshold) {
-        super(field);
-        setRewriteMethod(new TopTermsBoostOnlyBooleanQueryRewrite(20));
+        // TopTermsBoostOnlyBooleanQueryRewrite lives on MultiTermQuery (lucene-core).
+        super(field, new TopTermsBoostOnlyBooleanQueryRewrite(20));
         ts = new FuzzyTokenSimilarity(tokenThreshold, editThreshold);
         if (query.contains(" ")) {
             String[] tokens = query.split(" ");
@@ -38,6 +39,11 @@ public class FastJoinQuery extends MultiTermQuery{
     protected TermsEnum getTermsEnum(Terms terms, AttributeSource atts) throws IOException {
         TermsEnum tenum = terms.iterator();        
         return new FastJoinTermEnum(tenum, name, this.ts);
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        visitor.visitLeaf(this);
     }
 
     @Override

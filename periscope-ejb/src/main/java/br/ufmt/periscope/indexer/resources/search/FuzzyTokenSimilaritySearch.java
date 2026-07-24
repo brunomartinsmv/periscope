@@ -91,7 +91,7 @@ public class FuzzyTokenSimilaritySearch {
             
             ScoreDoc[] resultados = buscador.search(bq.build(), top).scoreDocs;
             for (ScoreDoc resultado : resultados){
-                docs.add(buscador.doc(resultado.doc));
+                docs.add(buscador.storedFields().document(resultado.doc));
             }
             resources.closeReader(reader);
         } catch (IOException ex) {

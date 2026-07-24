@@ -3,29 +3,30 @@ package br.ufmt.periscope.indexer;
 import br.ufmt.periscope.bean.SeedBean;
 import br.ufmt.periscope.indexer.resources.analysis.DataSignaturesAnalyzer;
 import br.ufmt.periscope.indexer.resources.analysis.FastJoinAnalyzer;
-import br.ufmt.periscope.model.Project;
 import java.io.IOException;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.LockObtainFailedException;
-import org.apache.lucene.store.SimpleFSLockFactory;
-import org.apache.lucene.util.Version;
-import com.github.jmkgreen.morphia.Datastore;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+/**
+ * Lucene index access for harmonization.
+ * <p>
+ * Lucene 6 indexes are incompatible with Lucene 9. On first deploy after upgrading
+ * from Lucene 6, clear the Lucene data under {@link SeedBean#PERISCOPE_DIR}
+ * (default {@code /opt/periscope}) so a fresh Lucene 9 index can be built.
+ */
 @Named
+@ApplicationScoped
 public class LuceneIndexerResources {
 
     
@@ -39,8 +40,6 @@ public class LuceneIndexerResources {
         if (dir != null) {
             try {                
                 reader = DirectoryReader.open(dir);
-            } catch (CorruptIndexException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
