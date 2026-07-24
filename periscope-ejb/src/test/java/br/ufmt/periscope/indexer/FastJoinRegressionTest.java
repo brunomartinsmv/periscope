@@ -120,6 +120,40 @@ public class FastJoinRegressionTest {
         }
     }
 
+    @Test
+    void petrobrasVsPetroleoBrasileiro_highFuzzySimilarityOnCondensedTokens() throws IOException {
+        List<String> shortName = analyze(fastJoinAnalyzer, "applicant", "PETROBRAS SA");
+        List<String> typoNear = analyze(fastJoinAnalyzer, "applicant", "PETROBRAZ SA");
+        assertFalse(shortName.isEmpty());
+        assertFalse(typoNear.isEmpty());
+
+        // Condensed near-miss of the distinctive stem (descriptor SA stripped)
+        FuzzyTokenSimilarity ts = new FuzzyTokenSimilarity(0.7f, 0.75f);
+        float score = ts.execute("petrobras", "petrobraz");
+        assertTrue(score > 0, "PETROBRAS vs PETROBRAZ condensed tokens should score > 0");
+        assertTrue(ts.fuzzyJaccard() > 0 || ts.fuzzyDice() > 0 || ts.fuzzyCosine() > 0);
+    }
+
+    @Test
+    void microsoftCorporationVsMicrosftCorporation_nearMissSimilarity() throws IOException {
+        List<String> correct = analyze(fastJoinAnalyzer, "applicant", "MICROSOFT CORPORATION");
+        List<String> typo = analyze(fastJoinAnalyzer, "applicant", "MICROSFT CORPORATION");
+        assertFalse(correct.isEmpty());
+        assertFalse(typo.isEmpty());
+
+        FuzzyTokenSimilarity ts = new FuzzyTokenSimilarity(0.7f, 0.75f);
+        float score = ts.execute("microsoft_corporation", "microsft_corporation");
+        assertTrue(score > 0, "Microsoft vs Microsft condensed forms should score > 0");
+        assertTrue(ts.fuzzyJaccard() > 0 || ts.fuzzyDice() > 0 || ts.fuzzyCosine() > 0);
+
+        // Distinct unrelated applicant must remain dissimilar
+        FuzzyTokenSimilarity unrelated = new FuzzyTokenSimilarity(0.7f, 0.75f);
+        unrelated.execute("microsoft_corporation", "samsung_electronics");
+        assertTrue(unrelated.fuzzyJaccard() == 0 && unrelated.fuzzyDice() == 0
+                        && unrelated.fuzzyCosine() == 0,
+                "Microsoft vs Samsung should not pass fuzzy thresholds");
+    }
+
     private static List<String> analyze(Analyzer analyzer, String field, String text) throws IOException {
         List<String> tokens = new ArrayList<>();
         try (TokenStream ts = analyzer.tokenStream(field, text)) {

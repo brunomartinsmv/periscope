@@ -12,7 +12,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 public class PDFTextParser {
 
-    String pdfToText(String fileName) throws IOException {
+    public String pdfToText(String fileName) throws IOException {
         File file = new File(fileName);
         try (PDDocument pdDoc = Loader.loadPDF(file)) {
             PDFTextStripper stripper = new PDFTextStripper();
@@ -20,7 +20,7 @@ public class PDFTextParser {
         }
     }
 
-    void writeTextToFile(String pdfText, String fileName) {
+    public void writeTextToFile(String pdfText, String fileName) {
 
         try {
             PrintWriter pw = new PrintWriter(fileName);

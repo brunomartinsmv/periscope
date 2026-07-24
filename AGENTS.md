@@ -68,7 +68,16 @@ run it if you wipe `~/.m2`. The parent POM also exposes
   (seeded into MongoDB on first deploy by `SeedBean`).
 
 ### Tests / lint
-- There is no lint config and no runnable automated test suite. The only test file
-  (`periscope-web/.../login.feature`) has no runner. `mvn test` compiles all modules
-  and runs zero tests (surefire reports nothing). Treat `mvn clean package` as the
-  compile/"lint" gate.
+- Unitários: `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 && mvn -B test`
+  (ou `mvn -B clean verify`). Cobrem Fast-Join, YamlLoader, PDFBox, importadores
+  Espacenet/Patentscope/DPMA. Não precisam de Mongo nem Docker.
+- Integração (Testcontainers MongoDB 7): `mvn -B verify -Pit`. Requer Docker
+  (disponível no GitHub Actions; **não** nesta VM — os `*IT.java` são pulados
+  via `@Testcontainers(disabledWithoutDocker = true)` / assumption).
+- CI: `.github/workflows/ci.yml` (build, integration `-Pit`, OWASP dependency-check
+  não bloqueante).
+- Cobertura: JaCoCo 0.8.12 no ciclo `test`. Relatórios em `*/target/site/jacoco/`.
+- Health: `GET http://localhost:8080/periscope/rest/health` → JSON
+  `status` / `mongodb` / `luceneIndex` (200 se UP, 503 se DOWN).
+- O feature Cucumber `periscope-web/.../login.feature` ainda não tem runner
+  (E2E fica para Fase 8b). Não há lint Spotless/ESLint nesta fase.
