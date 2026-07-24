@@ -6,7 +6,6 @@ import br.ufmt.periscope.model.User;
 import br.ufmt.periscope.model.UserLevel;
 import br.ufmt.periscope.repository.ProjectRepository;
 import dev.morphia.Datastore;
-import dev.morphia.query.FindOptions;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.SecurityContext;
@@ -41,7 +40,7 @@ public class ApiSecuritySupport {
         }
         Project project = ds.find(Project.class)
                 .filter(eq("_id", new ObjectId(projectId)))
-                .first(new FindOptions().projection().exclude("patents", "rules"));
+                .first();
         if (project == null) {
             throw ApiException.notFound("Project not found");
         }

@@ -11,7 +11,6 @@ import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.User;
 import br.ufmt.periscope.repository.PatentRepository;
-import dev.morphia.Datastore;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -33,9 +32,6 @@ import java.util.List;
 import java.util.Map;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
-import dev.morphia.query.FindOptions;
-
-import static dev.morphia.query.filters.Filters.eq;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
@@ -48,9 +44,6 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Tag(name = "Patents")
 @SecurityRequirement(name = "bearerAuth")
 public class ProjectPatentResource {
-
-    @Inject
-    private Datastore ds;
 
     @Inject
     private PatentRepository patentRepository;
@@ -106,10 +99,6 @@ public class ProjectPatentResource {
             @Context SecurityContext securityContext) throws Exception {
         User user = securitySupport.requireUser(securityContext);
         Project project = securitySupport.requireProject(projectId, user);
-        // Reload without heavy refs; patents list needed for importer to append
-        project = ds.find(Project.class)
-                .filter(eq("_id", project.getId()))
-                .first(new FindOptions().projection().exclude("rules"));
         if (project.getPatents() == null) {
             project.setPatents(new java.util.ArrayList<>());
         }
