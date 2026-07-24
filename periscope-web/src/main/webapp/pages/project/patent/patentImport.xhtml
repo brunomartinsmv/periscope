@@ -55,8 +55,10 @@
                                            border-radius: 5px;padding: 5px;font-size: 14px;color: #fff" rendered="#{importPatentController.stepTwo}">#{msgs['step.two']}</p:outputLabel>
                             <p:fileUpload id="fileUpload" label="#{msgs['choose.files']}"
                                           uploadLabel="#{msgs['upload.files']}" cancelLabel="#{msgs['cancel']}"
-                                          fileUploadListener="#{importPatentController.handleFileUpload}"
-                                          mode="advanced" disabled="#{not importPatentController.stepTwo}" allowTypes="/(.csv|.xls)$/"
+                                          listener="#{importPatentController.handleFileUpload}"
+                                          mode="advanced" disabled="#{not importPatentController.stepTwo}"
+                                          allowTypes="/(\.|\/)(csv|xls)$/"
+                                          sizeLimit="52428800" fileLimit="20"
                                           multiple="true" update="messages btnImport">
                             </p:fileUpload>
                             <p:outputLabel />

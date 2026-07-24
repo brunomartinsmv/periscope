@@ -82,7 +82,7 @@
                     </center>
                 </p:dialog>
             </h:form>
-            <h:form style="width: 100%" id="patentForm">
+            <h:form style="width: 100%" id="patentForm" enctype="multipart/form-data">
                 <p:fieldset  toggleable="true" toggleSpeed="500" legend="#{msgs['header']}" style="width: 97%">
                     <p:messages autoUpdate="true"/>
                     <h:panelGrid border="0" columns="2" style="width: 100%" columnClasses="panelHalf,panelHalf">
@@ -299,12 +299,12 @@
                     </h:panelGrid>
                     <center>
                         <h:panelGrid id="panelUploadPresentation" columns="1">
-                            <p:fileUpload fileUploadListener="#{patentController.uploadPresentationFile}" 
+                            <p:fileUpload listener="#{patentController.uploadPresentationFile}" 
                                           mode="advanced" dragDropSupport="false" auto="true"
-                                          sizeLimit="100000" multiple="false" label="#{msgs['choose.file']}"
+                                          sizeLimit="52428800" multiple="false" label="#{msgs['choose.file']}"
                                           update="panelUploadPresentation,panelButtonPresentation,panelInfoPresentation,messages1"
                                           rendered="#{patentController.temporaryPresentationFile == null}"
-                                          showButtons="false" allowTypes="/(\.|\/)(gif|jpeg|png|pdf)$/" />  
+                                          allowTypes="/(\.|\/)(gif|jpe?g|png|pdf)$/" />  
                             <p:growl id="messages1" showDetail="true"/>
                         </h:panelGrid>
 
@@ -341,11 +341,11 @@
                     </h:panelGrid>
                     <center>
                         <h:panelGrid id="panelUploadFile">
-                            <p:fileUpload fileUploadListener="#{patentController.uploadPatentInfo}" 
+                            <p:fileUpload listener="#{patentController.uploadPatentInfo}" 
                                           mode="advanced" dragDropSupport="false" auto="true"
                                           update="panelUploadFile,panelInfoFile,panelButtonFile,messages2"
                                           rendered="#{patentController.temporaryPatentInfo == null}"
-                                          sizeLimit="5000000" showButtons="false" label="#{msgs['choose.file']}"
+                                          sizeLimit="52428800" label="#{msgs['choose.file']}"
                                           allowTypes="/(\.|\/)(doc|docx|odt|pdf|txt)$/" />  
 
                             <p:growl id="messages2" showDetail="true"/>

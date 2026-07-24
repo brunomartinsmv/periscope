@@ -10,7 +10,7 @@
 
         <ui:define name="content">
             <center><h1>#{msgs['create.patent']}</h1></center>
-            <h:form id="patentForm">
+            <h:form id="patentForm" enctype="multipart/form-data">
 
                 <p:fieldset  toggleable="true" toggleSpeed="500" legend="#{msgs['header']}">
                         <h:panelGrid border="0" columns="2"  >
@@ -278,17 +278,16 @@
             </h:form>
             <p:dialog id="fileDialog" widgetVar="fileDownloadDialog" modal="true" closable="false"
                       header="#{msgs['options.file']}" resizable="false">
-                <h:form id="fileOptions" >
+                <h:form id="fileOptions" enctype="multipart/form-data">
                     <h:panelGrid columns="2">
                         <h:column>
-                            <p:fileUpload fileUploadListener="#{patentController.uploadPresentationFile}" 
+                            <p:fileUpload listener="#{patentController.uploadPresentationFile}" 
                                           mode="advanced" dragDropSupport="false" auto="true"
-                                          sizeLimit="100000" multiple="false" label="#{msgs['choose.file']}"
+                                          sizeLimit="52428800" multiple="false" label="#{msgs['choose.file']}"
                                           update=":#{p:resolveFirstComponentWithId('fileOptions', view).clientId},messages"
                                           process=":#{p:resolveFirstComponentWithId('fileOptions', view).clientId}" 
                                           rendered="#{patentController.temporaryPresentationFile == null}"
-                                          showButtons="false" 
-                                          allowTypes="/(\.|\/)(gif|jpeg|png|pdf)$/" />  
+                                          allowTypes="/(\.|\/)(gif|jpe?g|png|pdf)$/" />  
 
                             <p:growl id="messages" showDetail="true"/>
                         </h:column>
@@ -325,15 +324,15 @@
 
             <p:dialog id="patentDialog" widgetVar="patentDownloadDialog" modal="true" closable="false"
                       header="#{msgs['options.patent']}" resizable="false">
-                <h:form id="fileOptions2">
+                <h:form id="fileOptions2" enctype="multipart/form-data">
                     <h:panelGrid columns="2">
                         <h:column>
-                            <p:fileUpload fileUploadListener="#{patentController.uploadPatentInfo}" 
+                            <p:fileUpload listener="#{patentController.uploadPatentInfo}" 
                                           mode="advanced" dragDropSupport="false" auto="true"
                                           update=":#{p:resolveFirstComponentWithId('fileOptions2', view).clientId},messages"
                                           process=":#{p:resolveFirstComponentWithId('fileOptions2', view).clientId}" 
                                           rendered="#{patentController.temporaryPatentInfo == null}"
-                                          sizeLimit="5000000" showButtons="false" label="#{msgs['choose.file']}"
+                                          sizeLimit="52428800" label="#{msgs['choose.file']}"
                                           allowTypes="/(\.|\/)(doc|docx|odt|pdf|txt)$/" />  
 
                             <p:growl id="messages" showDetail="true"/>

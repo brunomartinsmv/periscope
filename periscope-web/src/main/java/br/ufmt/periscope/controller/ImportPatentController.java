@@ -122,13 +122,20 @@ public class ImportPatentController implements Serializable {
      * @param event
      */
     public void handleFileUpload(FileUploadEvent event) {
-        uploadAttachment.add(event.getFile());
-        FacesMessage msg = new FacesMessage("Sucesso", event.getFile().getFileName() + " foi enviado.");
-        FacesContext.getCurrentInstance().addMessage(null, msg);
-        
-        stepTwo = false;
-        stepThree = true;
-        
+        UploadedFile uploaded = event.getFile();
+        try {
+            // Materialize bytes now: native Part is request-scoped and gone on "Importar"
+            BufferedUploadedFile buffered = new BufferedUploadedFile(uploaded);
+            uploadAttachment.add(buffered);
+            FacesMessage msg = new FacesMessage("Sucesso", buffered.getFileName() + " foi enviado.");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            stepTwo = false;
+            stepThree = true;
+        } catch (IOException e) {
+            FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro",
+                    "Falha ao ler o arquivo enviado.");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+        }
     }
        
 
