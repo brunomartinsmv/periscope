@@ -1,0 +1,30 @@
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  periscope:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: Periscope
+      PERISCOPE_DIR: /opt/periscope
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - periscope_data:/opt/periscope
+
+volumes:
+  mongodb_data:
+  periscope_data:

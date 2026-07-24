@@ -7,12 +7,14 @@ import dev.morphia.Datastore;
 import dev.morphia.UpdateOptions;
 import dev.morphia.query.updates.UpdateOperators;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import java.util.ArrayList;
 import org.bson.types.ObjectId;
 
 import static dev.morphia.query.filters.Filters.eq;
 
+@ApplicationScoped
 @Named
 /**
  * Realiza a harmonização na base de dados, tanto para inventores quanto

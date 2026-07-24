@@ -1,5 +1,7 @@
 package br.ufmt.periscope.model;
 
+import java.io.Serializable;
+
 import dev.morphia.annotations.Entity;
 import dev.morphia.annotations.Id;
 import java.util.Date;
@@ -7,7 +9,9 @@ import java.util.List;
 import org.bson.types.ObjectId;
 
 @Entity(value = "fs.files")
-public class Files {
+public class Files implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     private ObjectId id;

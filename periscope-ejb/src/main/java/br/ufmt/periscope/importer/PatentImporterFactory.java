@@ -10,9 +10,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import jakarta.enterprise.context.ApplicationScoped;
 
-@Singleton
+@ApplicationScoped
 public class PatentImporterFactory {
 		
 	private Map<String,Class<? extends PatentImporter>> implementations = new HashMap<String, Class<? extends PatentImporter>>();

@@ -1,5 +1,7 @@
 package br.ufmt.periscope.lazy;
 
+import java.io.Serializable;
+
 import br.ufmt.periscope.model.Applicant;
 import br.ufmt.periscope.model.Inventor;
 import br.ufmt.periscope.model.Rule;
@@ -20,7 +22,9 @@ import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
 
 @Named
-public class LazyRuleDataModel extends LazyDataModel<Rule>{
+public class LazyRuleDataModel extends LazyDataModel<Rule> implements Serializable{
+
+    private static final long serialVersionUID = 1L;
     
     private @Inject
     RuleRepository ruleRepository;

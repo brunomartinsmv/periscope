@@ -1,5 +1,7 @@
 package br.ufmt.periscope.lazy;
 
+import java.io.Serializable;
+
 import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.repository.PatentRepository;
 import java.util.List;
@@ -13,7 +15,9 @@ import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
 
 @Named
-public class LazyPatentBrazilianDataModel extends LazyDataModel<Patent>{
+public class LazyPatentBrazilianDataModel extends LazyDataModel<Patent> implements Serializable{
+
+    private static final long serialVersionUID = 1L;
     private @Inject PatentRepository repo;
     private List<Patent> datasource;
 

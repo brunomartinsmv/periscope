@@ -20,10 +20,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+@ApplicationScoped
 @Named
 public class PatentRepository {
 

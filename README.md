@@ -1,101 +1,82 @@
-periscope
-=====================
+# Periscope
 
-What is it?
------------
+Sistema web de análise e harmonização de patentes desenvolvido na UFMT. A interface é JSF / PrimeFaces (português); a persistência é MongoDB (Morphia) e a harmonização de nomes usa Lucene.
 
-This is your project! It's a sample, deployable Maven 3 project to help you
-get your foot in the door developing with Java EE 6 on JBoss AS 7. This 
-project is setup to allow you to create a compliant Java EE 6 application 
-using JSF 2.0, CDI 1.0, EJB 3.1, JPA 2.0 and Bean Validation 1.0. It includes
-a persistence unit and some sample persistence and transaction code to help 
-you get your feet wet with database access in enterprise Java. 
+## Stack atual
 
-System requirements
--------------------
+| Componente | Versão |
+|------------|--------|
+| Java | 21 |
+| Jakarta EE | 10 |
+| Servidor | WildFly 34.0.1.Final |
+| UI | JSF + PrimeFaces 14 (`jakarta`) |
+| Persistência | MongoDB + Morphia 2.5.3 + mongodb-driver-sync 5.2.1 |
+| Harmonização | Lucene 9.12.0 |
+| Empacotamento | WAR único (`periscope-web` + EJB embarcado) |
 
-All you need to build this project is Java 6.0 (Java SDK 1.6) or better, Maven
-3.0 or better.
+Módulos Maven: `periscope-ejb` (EJB JAR) e `periscope-web` (WAR). Artefato: `periscope-web/target/periscope.war`.
 
-The application this project produces is designed to be run on a JBoss AS 7. 
- 
-NOTE:
-This project some retrieves artifacts from the JBoss Community Maven repository.
+## Requisitos
 
-With the prerequisites out of the way, you're ready to build and deploy.
+**Opção A — Docker:** Docker e Docker Compose.
 
-Deploying the application
--------------------------
- 
-First you need to start JBoss AS 7. To do this, run
-  
-    $JBOSS_HOME/bin/standalone.sh
-  
-or if you are using windows
- 
-    $JBOSS_HOME/bin/standalone.bat
+**Opção B — Manual:** JDK 21, Maven 3.9+, MongoDB 4.4+ (7.x recomendado) e WildFly 34.0.1.Final (JDK 21).
 
-To deploy the application, you first need to produce the archive to deploy using
-the following Maven goal:
+## Quick start (Docker Compose)
 
-    mvn package
+```bash
+./scripts/dev-up.sh
+# ou: docker compose up --build -d
+```
 
-You can now deploy the artifact to JBoss AS by executing the following command:
+- App: http://localhost:8080/periscope/
+- Login padrão: `admin` / `123456`
+- Parar: `./scripts/dev-down.sh`
 
-    mvn jboss-as:deploy
+Serviços: `mongodb` (`mongo:7`) e `periscope` (WildFly 34 + WAR).
 
-This will deploy `target/periscope.ear`.
- 
-The application will be running at the following URL <http://localhost:8080/periscope/>.
+## Build e deploy manual (WildFly 34)
 
-To undeploy from JBoss AS, run this command:
+```bash
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64   # ajuste se necessário
 
-    mvn jboss-as:undeploy
+# Artefatos legados (tema bootstrap 1.0.8), se ~/.m2 estiver limpo:
+./tools/install-legacy-artifacts.sh
 
-You can also start JBoss AS 7 and deploy the project using Eclipse. See the JBoss AS 7
-Getting Started Guide for Developers for more information.
- 
-Running the Arquillian tests
-============================
+mvn clean package
+# → periscope-web/target/periscope.war
 
-By default, tests are configured to be skipped. The reason is that the sample
-test is an Arquillian test, which requires the use of a container. You can
-activate this test by selecting one of the container configuration provided 
-for JBoss AS 7 (remote).
+# MongoDB local (exemplo)
+# mongod --dbpath /var/lib/mongodb --bind_ip 127.0.0.1 --port 27017 --fork
 
-To run the test in JBoss AS 7, first start a JBoss AS 7 instance. Then, run the
-test goal with the following profile activated:
+# Índice Lucene
+mkdir -p /opt/periscope
 
-    mvn clean test -Parq-jbossas-remote
+# WildFly
+cd /opt/jboss/wildfly-34.0.1.Final
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./bin/standalone.sh -b 0.0.0.0
 
-Importing the project into an IDE
-=================================
+# Em outro terminal — deploy
+cp /caminho/para/periscope-web/target/periscope.war \
+   /opt/jboss/wildfly-34.0.1.Final/standalone/deployments/
+```
 
-If you created the project using the Maven archetype wizard in your IDE
-(Eclipse, NetBeans or IntelliJ IDEA), then there is nothing to do. You should
-already have an IDE project.
+Sucesso: marcador `periscope.war.deployed` em `standalone/deployments/`. URL: http://localhost:8080/periscope/
 
-If you created the project from the commandline using archetype:generate, then
-you need to import the project into your IDE. If you are using NetBeans 6.8 or
-IntelliJ IDEA 9, then all you have to do is open the project as an existing
-project. Both of these IDEs recognize Maven projects natively.
- 
-Detailed instructions for using Eclipse with JBoss AS 7 are provided in the 
-JBoss AS 7 Getting Started Guide for Developers.
+## Variáveis de ambiente
 
-Downloading the sources and Javadocs
-====================================
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `MONGODB_URI` | `mongodb://localhost:27017` | URI do MongoDB |
+| `MONGODB_DATABASE` | `Periscope` | Nome do banco |
+| `PERISCOPE_DIR` | `/opt/periscope` | Diretório do índice Lucene (deve ser gravável) |
 
-If you want to be able to debug into the source code or look at the Javadocs
-of any library in the project, you can run either of the following two
-commands to pull them into your local repository. The IDE should then detect
-them.
+No Docker Compose, `MONGODB_URI` aponta para o serviço `mongodb`.
 
-    mvn dependency:sources
-    mvn dependency:resolve -Dclassifier=javadoc
+## Context root
 
+`/periscope` (definido em `WEB-INF/jboss-web.xml`).
 
+## Documentação de modernização
 
-
-
-
+Ver [docs/modernization/README.md](docs/modernization/README.md).

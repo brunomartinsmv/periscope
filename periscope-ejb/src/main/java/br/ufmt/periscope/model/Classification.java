@@ -1,11 +1,15 @@
 package br.ufmt.periscope.model;
 
+import java.io.Serializable;
+
 import br.ufmt.periscope.enumerated.ClassificationType;
 
 import dev.morphia.annotations.Embedded;
 
 @Embedded
-public class Classification {
+public class Classification implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String value;
     private String klass;

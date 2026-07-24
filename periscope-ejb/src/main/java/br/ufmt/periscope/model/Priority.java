@@ -1,11 +1,15 @@
 package br.ufmt.periscope.model;
 
+import java.io.Serializable;
+
 import java.util.Date;
 
 import dev.morphia.annotations.Embedded;
 
 @Embedded
-public class Priority {
+public class Priority implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String value;
     private Country country;

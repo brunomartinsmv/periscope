@@ -2,61 +2,73 @@
 
 ## Cursor Cloud specific instructions
 
-Periscope is a Java EE / Jakarta patent-analysis web app (UFMT). It is a Maven multi-module
-project: `periscope-ejb` (EJB jar, also bundled into the war), `periscope-web`
-(war), `periscope-ear` (ear). Persistence is **MongoDB** via Morphia 2 (no JPA/SQL);
-harmonization uses **Lucene 9**; the UI is JSF / PrimeFaces 14 (Portuguese).
+Periscope is a Jakarta EE 10 patent-analysis web app (UFMT). It is a Maven
+multi-module project: `periscope-ejb` (EJB jar, bundled into the war) and
+`periscope-web` (war). There is **no EAR** — packaging is a single WAR
+(`periscope-web/target/periscope.war`). Persistence is **MongoDB** via Morphia 2
+(no JPA/SQL); harmonization uses **Lucene 9**; the UI is JSF / PrimeFaces 14
+(Portuguese).
 
 ### Toolchain / runtime (already installed in the VM snapshot)
-- **Build & run on JDK 8** (`JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64`). This is
-  exported in `~/.bashrc`. Java 21 is the machine default but does NOT work: the
-  modules target source/target 1.6 (unsupported by JDK 21) and the runtime stack
-  below requires Java 8.
-- **Maven 3** (`mvn`), uses `~/.m2/settings.xml` which contains an override that
-  stops Maven 3.8+ from hard-blocking the (now-dead) plain-`http` repos declared in
-  the poms. Do not delete it.
+- **Build & run on JDK 21** (`JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`).
+  Export this **before** every `mvn` invocation: `~/.bashrc` still points at
+  Java 8, which does **not** work with the current modules
+  (`maven.compiler.release=21`).
+- **Maven 3** (`mvn`). `~/.m2/settings.xml` may still contain an override that
+  stops Maven 3.8+ from hard-blocking plain-`http` repos; keep it if present.
 
-### App server: WildFly 8.2.1.Final (NOT JBoss AS 7.1.1)
-- The README targets JBoss AS 7.1.1.Final, but AS 7.1.1 **cannot run on JDK 8**
-  (its `DeployerChainAddHandler` violates the comparator contract and JDK 8's
-  `ConcurrentSkipListMap` infinite-loops during boot — no config fix exists). Since
-  the app needs a Java 8 runtime (Lucene 6.0.0 is Java-8 bytecode), we run it on
-  **WildFly 8.2.1.Final** (the direct successor to JBoss AS 7), installed at
-  `/opt/jboss/wildfly-8.2.1.Final`. It hosts the EE6 app unchanged.
-- A copy of JBoss AS 7.1.1.Final is at `/opt/jboss/jboss-as-7.1.1.Final` for
-  reference only; do not use it.
+### App server: WildFly 34.0.1.Final
+- Install path: `/opt/jboss/wildfly-34.0.1.Final` (JDK 21).
+- `~/.bashrc` may still export `JBOSS_HOME=/opt/jboss/wildfly-8.2.1.Final` — **always**
+  `unset JBOSS_HOME` or `export JBOSS_HOME=/opt/jboss/wildfly-34.0.1.Final` before starting,
+  otherwise `standalone.sh` boots the old server even from the WildFly 34 directory.
+- Start:
+  `unset JBOSS_HOME; export JBOSS_HOME=/opt/jboss/wildfly-34.0.1.Final JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64; cd "$JBOSS_HOME" && ./bin/standalone.sh -b 0.0.0.0`
+- Deploy: copy `periscope-web/target/periscope.war` to
+  `/opt/jboss/wildfly-34.0.1.Final/standalone/deployments/`
+  (marker `periscope.war.deployed` on success; `.failed` on error).
+- Context root `/periscope` via `WEB-INF/jboss-web.xml`.
+- Copies of WildFly 8.2.1.Final and JBoss AS 7.1.1.Final may still exist under
+  `/opt/jboss/` for reference only — **do not use them**.
 
 ### MongoDB (driver sync 5.x / Morphia 2)
-- The app uses `mongodb-driver-sync` 5.2.1 + Morphia 2.4.14. Connection via
+- **MongoDB:** Morphia 2.5.3 + `mongodb-driver-sync` 5.2.1. Connection via
   `MONGODB_URI` (default `mongodb://localhost:27017`) and `MONGODB_DATABASE`
   (default `Periscope`). No auth in the local snapshot.
-- Server: **MongoDB 4.4+** works for local smoke; modernization targets **7.x**.
-  Start it (systemd is unavailable, run manually):
+  Morphia **2.5.x** is required with driver 5.x (`MapCodec` is final in bson 5;
+  Morphia 2.4.x cannot link). Jackson in the WAR is pinned to **2.17.0** (same
+  line as WildFly 34) and server Jackson modules are excluded in
+  `WEB-INF/jboss-deployment-structure.xml` so the seed YAML loader does not mix
+  classloaders.
+- Server: **MongoDB 4.4+** works for local smoke; Docker Compose targets
+  **mongo:7**. Start local mongod (systemd is unavailable, run manually):
   `mongod --dbpath /var/lib/mongodb --bind_ip 127.0.0.1 --port 27017 --logpath /var/log/mongodb/mongod.log --fork`
+  Do not restart MongoDB if it is already running in the VM.
+
+### Docker
+- **Docker is not available in this VM** — do not try to install it. Deliver
+  `Dockerfile` / `docker-compose.yml` / `scripts/dev-up.sh` / `scripts/dev-down.sh`
+  by code review; validate deploy manually on the local WildFly 34 install.
 
 ### Legacy Maven artifacts (vendored)
-Three dependency trees are gone from every live public repo and are vendored under
-`tools/legacy-m2/` (maven layout): `org.primefaces:primefaces:3.4.2`,
-`org.primefaces.themes:bootstrap:1.0.8` (recovered from the Wayback Machine) and
-`com.bigfatgun:fixjures:2.0-SNAPSHOT` + its `fixjures-core/json/yaml` modules
-(recovered from the Google Code source archive). `tools/install-legacy-artifacts.sh`
-installs them into `~/.m2`. This runs in the startup update script and is idempotent;
-run it manually if you ever wipe `~/.m2`.
+Still needed for the PrimeFaces theme `org.primefaces.themes:bootstrap:1.0.8`
+(PrimeFaces itself comes from Maven Central as 14.x with classifier `jakarta`).
+Vendored under `tools/legacy-m2/` (also contains obsolete `primefaces:3.4.2` and
+`ionsjures` trees that are no longer referenced by the POMs).
+`tools/install-legacy-artifacts.sh` installs them into `~/.m2` (idempotent);
+run it if you wipe `~/.m2`. The parent POM also exposes
+`file://${maven.multiModuleProjectDirectory}/tools/legacy-m2` as a repository.
 
 ### Build, deploy, run
-- Build the EAR: `mvn clean package` → `periscope-ear/target/periscope.ear`.
+- Build the WAR: `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 && mvn clean package`
+  → `periscope-web/target/periscope.war` (no EAR).
 - The app writes its Lucene index to **`/opt/periscope`**, which must exist and be
   writable by the server process (already created). Override with env `PERISCOPE_DIR`.
-- Start WildFly: `cd /opt/jboss/wildfly-8.2.1.Final && ./bin/standalone.sh -b 0.0.0.0`.
-- Deploy: `cp periscope-ear/target/periscope.ear /opt/jboss/wildfly-8.2.1.Final/standalone/deployments/`
-  (a `periscope.ear.deployed` marker appears on success; `.failed` on error).
 - App URL: `http://localhost:8080/periscope/`. Default login: **admin / 123456**
   (seeded into MongoDB on first deploy by `SeedBean`).
 
 ### Tests / lint
 - There is no lint config and no runnable automated test suite. The only test file
   (`periscope-web/.../login.feature`) has no runner. `mvn test` compiles all modules
-  and runs zero tests (surefire reports nothing). The README's Arquillian test
-  requires a remote container profile (`-Parq-jbossas-remote`) and is skipped by
-  default; no such test sources are present. Treat `mvn clean package` as the
+  and runs zero tests (surefire reports nothing). Treat `mvn clean package` as the
   compile/"lint" gate.

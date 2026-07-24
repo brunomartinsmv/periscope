@@ -9,9 +9,11 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import br.ufmt.periscope.compat.chart.ChartSeries;
 
+@ApplicationScoped
 @Named
 public class MainNatureApplicantReport {
 

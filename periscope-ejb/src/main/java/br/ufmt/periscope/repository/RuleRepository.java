@@ -12,6 +12,7 @@ import dev.morphia.query.FindOptions;
 import dev.morphia.query.Query;
 import dev.morphia.query.Sort;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.bson.types.ObjectId;
 
 import static dev.morphia.query.filters.Filters.eq;
 
+@ApplicationScoped
 @Named
 public class RuleRepository {
 
