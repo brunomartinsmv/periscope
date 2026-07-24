@@ -1,12 +1,12 @@
 package br.ufmt.periscope.controller;
 
 import java.util.ArrayList;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
 
-import org.primefaces.model.chart.CartesianChartModel;
-import org.primefaces.model.chart.ChartSeries;
+import br.ufmt.periscope.compat.chart.CartesianChartModel;
+import br.ufmt.periscope.compat.chart.ChartSeries;
 
 import br.ufmt.periscope.report.Pair;
 import br.ufmt.periscope.report.PublicationDateReport;
@@ -14,11 +14,11 @@ import br.ufmt.periscope.util.PDFTextParser;
 import java.util.Collections;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * - @ViewScoped<BR/>
  * Classe controller responsável por operações de visualização relacionadas à data de publicação das patentes
  */
-@ManagedBean(name = "publicantDateReport")
+@Named("publicantDateReport")
 @ViewScoped
 public class PublicationDateController extends GenericController {
 

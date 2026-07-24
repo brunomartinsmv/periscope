@@ -12,15 +12,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
-import javax.faces.context.Flash;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.context.Flash;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 
-@ManagedBean
+@Named
 @ViewScoped
 public class RuleController implements Serializable {
 

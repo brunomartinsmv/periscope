@@ -15,13 +15,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jboss.spec.javax.ws.rs</groupId>
-            <artifactId>jboss-jaxrs-api_1.1_spec</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>${jakartaee.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -29,13 +25,9 @@
             <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jboss.spec.javax.faces</groupId>
-            <artifactId>jboss-jsf-api_2.0_spec</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
+            <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>org.primefaces.themes</groupId>

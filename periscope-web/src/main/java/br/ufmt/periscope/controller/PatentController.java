@@ -24,28 +24,28 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
-import javax.faces.application.FacesMessage;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
-import javax.faces.context.Flash;
-import javax.faces.model.DataModel;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.application.FacesMessage;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.context.Flash;
+import jakarta.faces.model.DataModel;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 import org.bson.types.ObjectId;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
-import org.primefaces.model.UploadedFile;
+import org.primefaces.model.file.UploadedFile;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * - @ViewScoped<BR/>
  * Classe controller responsável por operações relacionadas às patentes
  */
-@ManagedBean
+@Named
 @ViewScoped
 public class PatentController {
 
@@ -135,7 +135,7 @@ public class PatentController {
             try {
                 InputStream arquivo = filesToInputStream(selectedPatent.getPatentInfo());
                 String name = selectedPatent.getPatentInfo().getFilename();
-                temporaryPatentInfo = new DefaultStreamedContent(arquivo, externalContext.getMimeType(name), name);
+                temporaryPatentInfo = DefaultStreamedContent.builder().stream(() -> arquivo).contentType(externalContext.getMimeType(name)).name(name).build();
             } catch (Exception e) {
                 log.throwing(PatentController.class.getName(), "updateFilesInformation", e);
             }
@@ -144,7 +144,7 @@ public class PatentController {
             try {
                 InputStream arquivo = filesToInputStream(selectedPatent.getPresentationFile());
                 String name = selectedPatent.getPresentationFile().getFilename();
-                temporaryPresentationFile = new DefaultStreamedContent(arquivo, externalContext.getMimeType(name), name);
+                temporaryPresentationFile = DefaultStreamedContent.builder().stream(() -> arquivo).contentType(externalContext.getMimeType(name)).name(name).build();
             } catch (Exception e) {
                 log.throwing(PatentController.class.getName(), "updateFilesInformation", e);
             }
@@ -360,7 +360,7 @@ public class PatentController {
      */
     private StreamedContent gerarStream(InputStream stream, String name) {
         ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-        return new DefaultStreamedContent(stream, externalContext.getMimeType(name), name);
+        return DefaultStreamedContent.builder().stream(() -> stream).contentType(externalContext.getMimeType(name)).name(name).build();
     }
 
     /**
@@ -400,7 +400,7 @@ public class PatentController {
 //        InputStream arquivo = istream;
 //        closeFs();
 //        ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-//        setDownload(new DefaultStreamedContent(arquivo, externalContext.getMimeType(gfile.getFilename()), gfile.getFilename()));
+//        setDownload(DefaultStreamedContent.builder().stream(() -> arquivo).contentType(externalContext.getMimeType(gfile.getFilename())).name(gfile.getFilename().build()));
     }
 
     /**
@@ -434,7 +434,7 @@ public class PatentController {
     public void uploadPresentationFile(FileUploadEvent event) throws IOException {
         file = event.getFile();
         temporaryPresentationFile = null;
-        temporaryPresentationFile = gerarStream(file.getInputstream(), file.getFileName());
+        temporaryPresentationFile = gerarStream(file.getInputStream(), file.getFileName());
         FacesMessage msg = new FacesMessage("Sucesso", event.getFile().getFileName() + " foi enviado.");
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
@@ -476,7 +476,7 @@ public class PatentController {
             fs.remove(selectedPatent.getPresentationFile().getId());
         }
         if (temporaryPresentationFile != null) {
-            GridFSInputFile gfsFiles = fs.createFile(temporaryPresentationFile.getStream());
+            GridFSInputFile gfsFiles = fs.createFile(temporaryPresentationFile.getStream().get());
             gfsFiles.setFilename(temporaryPresentationFile.getName());
             gfsFiles.setContentType(temporaryPresentationFile.getContentType());
             gfsFiles.save();
@@ -499,7 +499,7 @@ public class PatentController {
     public void uploadPatentInfo(FileUploadEvent event) throws IOException {
         file = event.getFile();
 //        temporaryPatentInfo = null;
-        temporaryPatentInfo = gerarStream(file.getInputstream(), file.getFileName());
+        temporaryPatentInfo = gerarStream(file.getInputStream(), file.getFileName());
         FacesMessage msg = new FacesMessage("Sucesso", event.getFile().getFileName() + " foi enviado.");
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
@@ -541,7 +541,7 @@ public class PatentController {
             fs.remove(selectedPatent.getPatentInfo().getId());
         }
         if (temporaryPatentInfo != null) {
-            GridFSInputFile gfsFiles = fs.createFile(temporaryPatentInfo.getStream());
+            GridFSInputFile gfsFiles = fs.createFile(temporaryPatentInfo.getStream().get());
             gfsFiles.setFilename(temporaryPatentInfo.getName());
             gfsFiles.setContentType(temporaryPatentInfo.getContentType());
             gfsFiles.save();

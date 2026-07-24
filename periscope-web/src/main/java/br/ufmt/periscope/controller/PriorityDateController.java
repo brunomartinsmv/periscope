@@ -4,17 +4,17 @@ import br.ufmt.periscope.report.Pair;
 import br.ufmt.periscope.report.PriorityDateReport;
 import java.util.ArrayList;
 import java.util.Collections;
-import javax.faces.bean.ManagedBean;
-import javax.inject.Inject;
-import org.primefaces.model.chart.CartesianChartModel;
-import org.primefaces.model.chart.ChartSeries;
+import jakarta.inject.Named;
+import jakarta.inject.Inject;
+import br.ufmt.periscope.compat.chart.CartesianChartModel;
+import br.ufmt.periscope.compat.chart.ChartSeries;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * - @ViewScoped<BR/>
  * Classe controller responsável por operações de visualização relacionadas à data de prioridade das patentes
  */
-@ManagedBean
+@Named
 public class PriorityDateController extends GenericController {
 
     private @Inject

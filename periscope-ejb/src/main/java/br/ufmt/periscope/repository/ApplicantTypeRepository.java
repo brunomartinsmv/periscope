@@ -2,8 +2,8 @@ package br.ufmt.periscope.repository;
 
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import br.ufmt.periscope.model.ApplicantType;
 
@@ -12,8 +12,8 @@ import com.mongodb.BasicDBObject;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import javax.annotation.PostConstruct;
-import javax.faces.context.FacesContext;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.context.FacesContext;
 
 @Named
 public class ApplicantTypeRepository {

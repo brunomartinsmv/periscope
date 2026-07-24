@@ -4,22 +4,17 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Set;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
-import javax.faces.bean.SessionScoped;
-import javax.faces.context.FacesContext;
-import javax.faces.event.ValueChangeEvent;
+import jakarta.inject.Named;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.event.ValueChangeEvent;
 
-@ManagedBean(name = "language")
+@Named("language")
 @SessionScoped
 public class LanguageBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @ManagedProperty(value = "#{msgs}")
-    private ResourceBundle messageBundle;
 
     private String localeCode = "pt_BR";
     private String localString = "Português";
@@ -60,12 +55,7 @@ public class LanguageBean implements Serializable {
     public void setLocalString(String localString) {
         this.localString = localString;
     }
-
-    public void setMessageBundle(ResourceBundle messageBundle) {
-        this.messageBundle = messageBundle;
-    }
-
-    public void localeCodeChanged(ValueChangeEvent evt) {
+public void localeCodeChanged(ValueChangeEvent evt) {
         String novoLocale = evt.getNewValue().toString();
         Locale locale = locales.get(novoLocale);
         FacesContext.getCurrentInstance().getViewRoot().setLocale(locale);

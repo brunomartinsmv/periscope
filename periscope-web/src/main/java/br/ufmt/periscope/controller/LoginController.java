@@ -1,6 +1,6 @@
 package br.ufmt.periscope.controller;
 
-import javax.enterprise.inject.Model;
+import jakarta.enterprise.inject.Model;
 
 /**
  * - @Model<BR/>

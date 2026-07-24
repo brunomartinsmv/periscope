@@ -3,10 +3,10 @@ package br.ufmt.periscope.report;
 import java.util.Collections;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
-import org.primefaces.model.chart.ChartSeries;
+import br.ufmt.periscope.compat.chart.ChartSeries;
 
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.repository.ClassificationRepository;

@@ -3,14 +3,14 @@ package br.ufmt.periscope.controller;
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.qualifier.CurrentProject;
 import br.ufmt.periscope.repository.ProjectRepository;
-import javax.faces.bean.ManagedBean;
-import javax.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Inject;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * Classe controller responsável por operações de visualização relacionadas aos menus da barra lateral
  */
-@ManagedBean(name = "sidebarController")
+@Named("sidebarController")
 public class SidebarController {
 
     private @Inject

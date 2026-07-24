@@ -3,16 +3,16 @@ package br.ufmt.periscope.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.faces.application.FacesMessage;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
-import javax.faces.context.Flash;
-import javax.faces.model.DataModel;
-import javax.faces.model.ListDataModel;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.application.FacesMessage;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.context.Flash;
+import jakarta.faces.model.DataModel;
+import jakarta.faces.model.ListDataModel;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.bson.types.ObjectId;
 
@@ -23,11 +23,11 @@ import br.ufmt.periscope.qualifier.LoggedUser;
 import com.github.jmkgreen.morphia.Datastore;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * - @ViewScoped<BR/>
  * Classe controller responsável por operações elacionadas aos usuários do projeto
  */
-@ManagedBean
+@Named
 @ViewScoped
 public class UserController {
 

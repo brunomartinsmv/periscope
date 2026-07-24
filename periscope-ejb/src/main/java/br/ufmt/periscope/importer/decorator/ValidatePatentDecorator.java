@@ -1,9 +1,9 @@
 package br.ufmt.periscope.importer.decorator;
 
-import javax.decorator.Decorator;
-import javax.decorator.Delegate;
-import javax.enterprise.inject.Any;
-import javax.inject.Inject;
+import jakarta.decorator.Decorator;
+import jakarta.decorator.Delegate;
+import jakarta.enterprise.inject.Any;
+import jakarta.inject.Inject;
 
 import br.ufmt.periscope.importer.PatentImporter;
 import br.ufmt.periscope.model.Patent;

@@ -1,23 +1,23 @@
 package br.ufmt.periscope.controller;
 
 import java.util.ArrayList;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
 
-import org.primefaces.model.chart.CartesianChartModel;
-import org.primefaces.model.chart.ChartSeries;
+import br.ufmt.periscope.compat.chart.CartesianChartModel;
+import br.ufmt.periscope.compat.chart.ChartSeries;
 
 import br.ufmt.periscope.report.ApplicationDateReport;
 import br.ufmt.periscope.report.Pair;
 import java.util.Collections;
 
 /**
- * - @ManagedBean<BR/>
+ * - @Named<BR/>
  * - @ViewScoped<BR/>
  * Classe controller responsável por operações de visualização relacionadas à data de deposito das patentes
  */
-@ManagedBean(name = "applicantDateReport")
+@Named("applicantDateReport")
 @ViewScoped
 public class ApplicantDateController extends GenericController {
 

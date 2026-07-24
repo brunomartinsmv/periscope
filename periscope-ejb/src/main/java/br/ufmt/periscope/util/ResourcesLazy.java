@@ -16,9 +16,9 @@ import br.ufmt.periscope.model.User;
 import com.mongodb.gridfs.GridFS;
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 /**
  * - @Named<BR/>

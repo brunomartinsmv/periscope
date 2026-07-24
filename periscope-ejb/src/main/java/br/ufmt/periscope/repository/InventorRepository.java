@@ -25,16 +25,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.faces.bean.ViewScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.apache.lucene.document.Document;
 
 /**
  * 
  * This class have the methods with the queries for Inventor
  */
-@ViewScoped
+@RequestScoped
 @Named
 public class InventorRepository {
 

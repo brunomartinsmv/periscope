@@ -7,10 +7,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import javax.faces.context.FacesContext;
-import javax.inject.Inject;
-import javax.inject.Named;
-import org.primefaces.model.chart.ChartSeries;
+import jakarta.faces.context.FacesContext;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import br.ufmt.periscope.compat.chart.ChartSeries;
 
 @Named
 public class MainNatureApplicantReport {

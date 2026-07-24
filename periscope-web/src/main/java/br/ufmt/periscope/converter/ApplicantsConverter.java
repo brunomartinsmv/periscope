@@ -2,11 +2,11 @@ package br.ufmt.periscope.converter;
 
 import br.ufmt.periscope.model.Applicant;
 import br.ufmt.periscope.repository.ApplicantRepository;
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
-import javax.faces.convert.FacesConverter;
-import javax.inject.Inject;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.convert.Converter;
+import jakarta.faces.convert.FacesConverter;
+import jakarta.inject.Inject;
 
 @FacesConverter(value = "applicantConverter", forClass = Applicant.class)
 public class ApplicantsConverter implements Converter {

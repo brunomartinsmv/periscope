@@ -2,8 +2,8 @@ package br.ufmt.periscope.indexer.resources.analysis;
 
 import com.github.jmkgreen.morphia.Datastore;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 /**
  * O conjunto de descritores comuns. Gerencia as buscas a base de dados de

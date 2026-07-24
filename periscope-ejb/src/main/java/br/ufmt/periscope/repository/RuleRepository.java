@@ -3,8 +3,8 @@ package br.ufmt.periscope.repository;
 import br.ufmt.periscope.model.Patent;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import org.bson.types.ObjectId;
 

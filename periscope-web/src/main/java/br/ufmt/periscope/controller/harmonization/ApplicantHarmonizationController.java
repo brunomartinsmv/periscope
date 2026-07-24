@@ -23,18 +23,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
-import javax.faces.context.Flash;
-import javax.faces.event.ValueChangeEvent;
-import javax.faces.model.DataModel;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import org.primefaces.context.RequestContext;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Named;
+import jakarta.faces.view.ViewScoped;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.context.Flash;
+import jakarta.faces.event.ValueChangeEvent;
+import jakarta.faces.model.DataModel;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import org.primefaces.PrimeFaces;
 
-@ManagedBean
+@Named
 @ViewScoped
 public class ApplicantHarmonizationController implements Serializable {
 
@@ -134,7 +134,7 @@ public class ApplicantHarmonizationController implements Serializable {
         selectedApplicants.remove(pa);
         if (originalRule != null) {
             updateHarmonized();
-            RequestContext.getCurrentInstance().reset(":formAll:applicants");
+            PrimeFaces.current().resetInputs(":formAll:applicants");
         }
         return "";
     }
