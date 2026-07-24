@@ -1,5 +1,6 @@
 package br.ufmt.periscope.report;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,9 +13,8 @@ import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.repository.ApplicantRepository;
 import br.ufmt.periscope.util.Filters;
 
-import com.github.jmkgreen.morphia.Datastore;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import dev.morphia.Datastore;
+import org.bson.Document;
 
 @Named
 public class MainApplicantReport {
@@ -27,17 +27,18 @@ public class MainApplicantReport {
     public ChartSeries mainApplicantSeries(Project currentProject, int limit, Filters filtro) {
         ChartSeries series = new ChartSeries("Número de Depositos");
         repo.updateMainApplicants(currentProject, filtro);
-        List<DBObject> it = ds.getDB()
-                .getCollection("mainApplicant").find()
-                .sort(new BasicDBObject("value", -1))
+        List<Document> it = ds.getDatabase()
+                .getCollection("mainApplicant")
+                .find()
+                .sort(new Document("value", -1))
                 .limit(limit)
-                .toArray();
+                .into(new ArrayList<Document>());
 
         Collections.reverse(it);
 
-        for (DBObject obj : it) {
+        for (Document obj : it) {
             String name = (String) obj.get("_id");
-            Double count = (Double) obj.get("value");
+            Number count = (Number) obj.get("value");
             series.set(name, count.intValue());
         }
 

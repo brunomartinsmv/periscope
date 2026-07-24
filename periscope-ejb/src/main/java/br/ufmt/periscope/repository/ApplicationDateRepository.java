@@ -11,11 +11,9 @@ import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.report.Pair;
 import br.ufmt.periscope.util.Filters;
 
-import com.github.jmkgreen.morphia.Datastore;
-import com.mongodb.AggregationOutput;
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import com.mongodb.client.MongoCollection;
+import dev.morphia.Datastore;
+import org.bson.Document;
 
 @Named
 public class ApplicationDateRepository {
@@ -32,54 +30,35 @@ public class ApplicationDateRepository {
          * {$group:{_id:"$year1",ApplicationPerYear:{$sum:1}}}, {$sort:{_id:1}}
          * );
          */
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
-        DBObject matchProj = new BasicDBObject();
-        matchProj.put("$match", new BasicDBObject("project.$id", projetoAtual.getId()));
+        MongoCollection<Document> coll = ds.getDatabase()
+                .getCollection(ds.getMapper().getEntityModel(Patent.class).getCollectionName());
+
+        List<Document> pipeline = new ArrayList<Document>();
+        pipeline.add(new Document("$match", new Document("project.$id", projetoAtual.getId())));
 
         if (filtro.isComplete()) {
-            DBObject matchComplete = new BasicDBObject();
-            matchComplete.put("$match", new BasicDBObject("completed", filtro.isComplete()));
-            parametros.add(matchComplete);
+            pipeline.add(new Document("$match", new Document("completed", filtro.isComplete())));
         }
 
-        DBObject matchDate = new BasicDBObject();
-        matchDate.put("$match", new BasicDBObject("applicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim())));
+        pipeline.add(new Document("$match", new Document("applicationDate",
+                new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()))));
 
-        parametros.add(matchDate);
+        pipeline.add(new Document("$match", new Document("blacklisted", false)));
 
-        DBObject matchBlacklist = new BasicDBObject();
-        matchBlacklist.put("$match", new BasicDBObject("blacklisted", false));
-        parametros.add(matchBlacklist);
+        pipeline.add(new Document("$project", new Document("year1",
+                new Document("$year", "$applicationDate"))));
 
-        DBObject project = new BasicDBObject();
-        project.put("$project", new BasicDBObject("year1", new BasicDBObject(
-                "$year", "$applicationDate")));
-        parametros.add(project);
+        pipeline.add(new Document("$group", new Document("_id", "$year1")
+                .append("applicationPerYear", new Document("$sum", 1))));
 
-        DBObject group = new BasicDBObject();
-        DBObject fields = new BasicDBObject("_id", "$year1");
-        fields.put("applicationPerYear", new BasicDBObject("$sum", 1));
-        group.put("$group", fields);
-        parametros.add(group);
+        pipeline.add(new Document("$sort", new Document("_id", 1)));
 
-        DBObject sort = new BasicDBObject("$sort", new BasicDBObject("_id", 1));
-        parametros.add(sort);
-
-        DBObject[] parameters = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(
-                matchProj, parameters);
-
-        BasicDBList outputResult = (BasicDBList) output.getCommandResult().get("result");
+        List<Document> outputResult = coll.aggregate(pipeline).into(new ArrayList<Document>());
 
         List<Pair> pairs = new ArrayList<Pair>();
-        for (Object object : outputResult) {
-            DBObject aux = (DBObject) object;
-
+        for (Document aux : outputResult) {
             String year = aux.get("_id").toString();
-            Integer count = (Integer) aux.get("applicationPerYear");
-
+            Number count = (Number) aux.get("applicationPerYear");
             pairs.add(new Pair(year, count));
         }
         return pairs;

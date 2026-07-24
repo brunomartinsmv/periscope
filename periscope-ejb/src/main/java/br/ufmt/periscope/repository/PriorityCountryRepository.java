@@ -4,15 +4,13 @@ import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.report.Pair;
 import br.ufmt.periscope.util.Filters;
-import com.github.jmkgreen.morphia.Datastore;
-import com.mongodb.AggregationOutput;
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import com.mongodb.client.MongoCollection;
+import dev.morphia.Datastore;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.bson.Document;
 
 @Named
 public class PriorityCountryRepository {
@@ -28,74 +26,48 @@ public class PriorityCountryRepository {
          * prioritiesPerCountry:{$sum:1}}}, {$sort:{prioritiesPerCountry:-1}},
          * {$limit:5});
          */
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
+        MongoCollection<Document> coll = ds.getDatabase()
+                .getCollection(ds.getMapper().getEntityModel(Patent.class).getCollectionName());
 
-        DBObject matchProj = new BasicDBObject();
-        matchProj.put("$match", new BasicDBObject("project.$id", currentProject.getId()));
+        List<Document> pipeline = new ArrayList<Document>();
+
+        pipeline.add(new Document("$match", new Document("project.$id", currentProject.getId())));
 
         if (filtro.isComplete()) {
-            DBObject matchComplete = new BasicDBObject();
-            matchComplete.put("$match", new BasicDBObject("completed", filtro.isComplete()));
-            parametros.add(matchComplete);
+            pipeline.add(new Document("$match", new Document("completed", filtro.isComplete())));
         }
 
-        DBObject matchDate = new BasicDBObject();
         if (filtro.getSelecionaData() == 1) {
-            matchDate.put("$match", new BasicDBObject("publicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim())));
+            pipeline.add(new Document("$match", new Document("publicationDate",
+                    new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()))));
         } else {
-            matchDate.put("$match", new BasicDBObject("applicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim())));
+            pipeline.add(new Document("$match", new Document("applicationDate",
+                    new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()))));
         }
-        parametros.add(matchDate);
 
-        DBObject matchBlacklist = new BasicDBObject();
-        matchBlacklist.put("$match", new BasicDBObject("blacklisted", false));
-        parametros.add(matchBlacklist);
+        pipeline.add(new Document("$match", new Document("blacklisted", false)));
+        pipeline.add(new Document("$unwind", "$priorities"));
+        pipeline.add(new Document("$sort", new Document("priorities.date", 1)));
 
-        DBObject unwind = new BasicDBObject("$unwind", "$priorities");
-        parametros.add(unwind);
+        pipeline.add(new Document("$group", new Document("_id", "$_id")
+                .append("country", new Document("$first", "$priorities.country"))));
 
-        DBObject sort1 = new BasicDBObject("$sort", new BasicDBObject("priorities.date", 1));
-        parametros.add(sort1);
+        pipeline.add(new Document("$group", new Document("_id", "$country")
+                .append("prioritiesPerCountry", new Document("$sum", 1))));
 
-        DBObject group1 = new BasicDBObject();
+        pipeline.add(new Document("$sort", new Document("prioritiesPerCountry", -1)));
+        pipeline.add(new Document("$limit", limit));
 
-        DBObject fields = new BasicDBObject("_id", "$_id");
-        fields.put("country", new BasicDBObject("$first", "$priorities.country"));
-        group1.put("$group", fields);
-        parametros.add(group1);
-
-        DBObject group2 = new BasicDBObject();
-        parametros.add(group2);
-        fields = new BasicDBObject("_id", "$country");
-        fields.put("prioritiesPerCountry", new BasicDBObject("$sum", 1));
-        group2.put("$group", fields);
-
-        DBObject sort2 = new BasicDBObject("$sort", new BasicDBObject(
-                "prioritiesPerCountry", -1));
-        parametros.add(sort2);
-
-        DBObject pipeLimit = new BasicDBObject("$limit", limit);
-        parametros.add(pipeLimit);
-
-        DBObject[] parameters = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(matchProj, parameters);
-
-        BasicDBList outputResult = (BasicDBList) output.getCommandResult().get(
-                "result");
+        List<Document> outputResult = coll.aggregate(pipeline).into(new ArrayList<Document>());
 
         List<Pair> pairs = new ArrayList<Pair>();
-        for (Object object : outputResult) {
-            DBObject aux = (DBObject) object;
-            DBObject countryName = (DBObject) aux.get("_id");
+        for (Document aux : outputResult) {
+            Document countryName = (Document) aux.get("_id");
             String country = "Without Priority Country";
             if (countryName != null) {
-
                 country = countryName.get("name").toString();
-
             }
-            Integer count = (Integer) aux.get("prioritiesPerCountry");
+            Number count = (Number) aux.get("prioritiesPerCountry");
             pairs.add(new Pair(country, count));
         }
         return pairs;
