@@ -122,12 +122,12 @@ mvn clean compile -DskipTests
 
 ## Critérios de aceite
 
-- [ ] `mvn validate` passa em todos os módulos
-- [ ] Nenhum repositório HTTP nos POMs
-- [ ] fixjures removido; seed YAML carrega via Jackson
-- [ ] Java 21 configurado (`maven.compiler.release=21`)
-- [ ] JUnit 5 configurado
-- [ ] Versões centralizadas no POM pai
+- [x] `mvn validate` passa em todos os módulos
+- [x] Nenhum repositório HTTP nos POMs
+- [x] fixjures removido; seed YAML carrega via Jackson
+- [x] Java 21 configurado (`maven.compiler.release=21`)
+- [x] JUnit 5 configurado
+- [x] Versões centralizadas no POM pai
 
 ## Riscos
 

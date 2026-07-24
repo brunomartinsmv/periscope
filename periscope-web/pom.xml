@@ -11,43 +11,22 @@
 
     <artifactId>periscope-web</artifactId>
     <packaging>war</packaging>
-
     <name>periscope Web module</name>
 
     <dependencies>
-
-        <!-- Dependency on the EJB module so we can use it's services if needed -->
-        <!--      <dependency>
-           <groupId>br.ufmt</groupId>
-           <artifactId>periscope-ejb</artifactId>
-           <type>ejb</type>
-           <scope>provided</scope>
-        </dependency>-->
-
-        <!-- Import the JAX-RS API, we use provided scope as the API is included 
-        in JBoss AS 7 -->
         <dependency>
             <groupId>org.jboss.spec.javax.ws.rs</groupId>
             <artifactId>jboss-jaxrs-api_1.1_spec</artifactId>
             <scope>provided</scope>
         </dependency>
-
-        <!-- Import the CDI API, we use provided scope as the API is included 
-        in JBoss AS 7 -->
         <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
             <scope>provided</scope>
         </dependency>
-
-        <!-- Import the JPA API, we use provided scope as the API is included 
-        in JBoss AS 7 -->
-
-
         <dependency>
-            <groupId>org.apache.commons</groupId>
+            <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>1.3.2</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.spec.javax.faces</groupId>
@@ -55,59 +34,41 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.primefaces.themes</groupId>
             <artifactId>bootstrap</artifactId>
-            <version>1.0.8</version>
         </dependency>
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
-            <version>1.3</version>
+            <version>1.5</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>periscope-ejb</artifactId>
             <version>${project.version}</version>
+            <type>ejb</type>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
-    <repositories>
-        <repository>
-            <id>prime-repo</id>
-            <name>Prime Repo</name>
-            <url>http://repository.primefaces.org</url>
-        </repository>
-    </repositories>
-    
-    
-    
+
     <build>
         <plugins>
-            
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.1.1</version>
-                <configuration>
-                    <!-- Java EE 6 doesn't require web.xml, Maven needs to catch 
-                    up! -->
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                    
-                </configuration>
             </plugin>
         </plugins>
     </build>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jboss.spec</groupId>
-                <artifactId>jboss-javaee-web-6.0</artifactId>
-                <version>${javaee6.web.spec.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    <properties>
-        <javaee6.web.spec.version>2.0.0.Final</javaee6.web.spec.version>
-    </properties>
-
 </project>
