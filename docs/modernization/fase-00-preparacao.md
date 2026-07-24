@@ -117,12 +117,12 @@ Commits: `feat(fase-N): descrição` ou `chore(fase-N): descrição`.
 
 ## Critérios de aceite
 
-- [ ] Inventário funcional e técnico documentados
-- [ ] YAMLs de seed preservados e referenciados
-- [ ] Checklist de ambiente local definido
-- [ ] Estratégia de validação sem homologação acordada
-- [ ] Requisitos de homologação futura documentados
-- [ ] Nenhuma alteração de código de produção nesta fase
+- [x] Inventário funcional e técnico documentados
+- [x] YAMLs de seed preservados e referenciados
+- [x] Checklist de ambiente local definido
+- [x] Estratégia de validação sem homologação acordada
+- [x] Requisitos de homologação futura documentados
+- [x] Nenhuma alteração de código de produção nesta fase
 
 ## Riscos
 
