@@ -29,11 +29,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 @Path("/projects/{projectId}/reports")
 @Produces(MediaType.APPLICATION_JSON)
 @RequestScoped
 @RolesAllowed({"ADMIN", "USER"})
+@Tag(name = "Reports")
+@SecurityRequirement(name = "bearerAuth")
 public class ReportResource {
 
     @Inject
@@ -59,6 +64,7 @@ public class ReportResource {
 
     @GET
     @Path("/main-applicant")
+    @Operation(summary = "Principais depositantes")
     public ReportDTO mainApplicant(
             @PathParam("projectId") String projectId,
             @QueryParam("limit") @DefaultValue("10") int limit,
@@ -70,6 +76,7 @@ public class ReportResource {
 
     @GET
     @Path("/main-inventor")
+    @Operation(summary = "Principais inventores")
     public ReportDTO mainInventor(
             @PathParam("projectId") String projectId,
             @QueryParam("limit") @DefaultValue("10") int limit,
@@ -81,6 +88,7 @@ public class ReportResource {
 
     @GET
     @Path("/main-ipc")
+    @Operation(summary = "Principais IPCs")
     public ReportDTO mainIpc(
             @PathParam("projectId") String projectId,
             @QueryParam("limit") @DefaultValue("10") int limit,
@@ -93,6 +101,7 @@ public class ReportResource {
 
     @GET
     @Path("/application-date")
+    @Operation(summary = "Relatório por data de depósito")
     public ReportDTO applicationDate(
             @PathParam("projectId") String projectId,
             @Context SecurityContext securityContext) {
@@ -103,6 +112,7 @@ public class ReportResource {
 
     @GET
     @Path("/publication-date")
+    @Operation(summary = "Relatório por data de publicação")
     public ReportDTO publicationDate(
             @PathParam("projectId") String projectId,
             @Context SecurityContext securityContext) {

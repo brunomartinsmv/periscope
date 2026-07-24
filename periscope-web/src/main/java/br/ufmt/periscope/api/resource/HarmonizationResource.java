@@ -38,12 +38,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 @Path("/projects/{projectId}/harmonization")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
 @RolesAllowed({"ADMIN", "USER"})
+@Tag(name = "Harmonization")
+@SecurityRequirement(name = "bearerAuth")
 public class HarmonizationResource {
 
     @Inject
@@ -69,6 +74,7 @@ public class HarmonizationResource {
 
     @GET
     @Path("/suggestions")
+    @Operation(summary = "Sugestões Lucene Fast-Join")
     public Map<String, Object> suggestions(
             @PathParam("projectId") String projectId,
             @QueryParam("type") @DefaultValue("applicant") String type,
@@ -101,6 +107,7 @@ public class HarmonizationResource {
 
     @GET
     @Path("/rules")
+    @Operation(summary = "Listar regras de harmonização")
     public List<RuleDTO> listRules(
             @PathParam("projectId") String projectId,
             @QueryParam("type") String type,
@@ -122,6 +129,7 @@ public class HarmonizationResource {
 
     @POST
     @Path("/rules")
+    @Operation(summary = "Criar regra")
     public Response createRule(
             @PathParam("projectId") String projectId,
             RuleRequest request,
@@ -169,6 +177,7 @@ public class HarmonizationResource {
 
     @DELETE
     @Path("/rules/{ruleId}")
+    @Operation(summary = "Excluir regra")
     public Response deleteRule(
             @PathParam("projectId") String projectId,
             @PathParam("ruleId") String ruleId,
@@ -186,6 +195,7 @@ public class HarmonizationResource {
 
     @POST
     @Path("/apply")
+    @Operation(summary = "Aplicar todas as regras")
     public Map<String, Object> applyAll(
             @PathParam("projectId") String projectId,
             @Context SecurityContext securityContext) {
@@ -206,6 +216,7 @@ public class HarmonizationResource {
 
     @POST
     @Path("/rules/{ruleId}/apply")
+    @Operation(summary = "Aplicar uma regra")
     public Map<String, Object> applyOne(
             @PathParam("projectId") String projectId,
             @PathParam("ruleId") String ruleId,

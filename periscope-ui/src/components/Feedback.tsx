@@ -14,7 +14,7 @@ export function EmptyState({ children }: { children: ReactNode }) {
 
 export function ErrorAlert({ message }: { message: string }) {
   return (
-    <div className="alert alert-error" role="alert">
+    <div className="alert alert-error" role="alert" data-testid="error-alert">
       {message}
     </div>
   );

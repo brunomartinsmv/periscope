@@ -150,6 +150,7 @@ export function HarmonizationPage() {
             <label htmlFor="query">Busca</label>
             <input
               id="query"
+              data-testid="harmonization-query"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Digite ao menos 2 caracteres"
@@ -172,11 +173,12 @@ export function HarmonizationPage() {
             ) : suggestions.length === 0 ? (
               <p className="muted">Nenhuma sugestão encontrada.</p>
             ) : (
-              <div className="suggestions-box" role="listbox" aria-label="Sugestões">
+              <div className="suggestions-box" role="listbox" aria-label="Sugestões" data-testid="suggestions-list">
                 {suggestions.map((name) => (
                   <button
                     key={name}
                     type="button"
+                    data-testid={`suggestion-${name}`}
                     onClick={() => toggleSuggestion(name)}
                     aria-selected={selectedSet.has(name)}
                   >

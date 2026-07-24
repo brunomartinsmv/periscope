@@ -13,6 +13,8 @@ import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.nio.file.Files;
 import org.bson.Document;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 /**
  * Liveness/readiness probe: MongoDB ping + Lucene index directory under {@code PERISCOPE_DIR}.
@@ -23,6 +25,7 @@ import org.bson.Document;
  */
 @Path("/health")
 @ApplicationScoped
+@Tag(name = "Health")
 public class HealthResource {
 
     @Inject
@@ -33,6 +36,7 @@ public class HealthResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Health check", description = "MongoDB ping + diretório Lucene")
     public Response health() {
         boolean mongoUp = isMongoUp();
         boolean luceneUp = isLuceneIndexReadable();

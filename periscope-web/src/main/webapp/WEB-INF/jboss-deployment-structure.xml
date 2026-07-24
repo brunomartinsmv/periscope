@@ -22,5 +22,9 @@
       <module name="com.fasterxml.jackson.jaxrs.jackson-jaxrs-json-provider"/>
       <module name="org.jboss.resteasy.resteasy-jackson2-provider"/>
     </exclusions>
+    <!-- OpenAPI annotations API from WildFly (provided Maven dep); scanning by openapi-smallrye -->
+    <dependencies>
+      <module name="org.eclipse.microprofile.openapi.api"/>
+    </dependencies>
   </deployment>
 </jboss-deployment-structure>

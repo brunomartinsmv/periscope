@@ -71,7 +71,7 @@ function PatentEditForm({
     <div>
       <div className="page-header">
         <div>
-          <h1>Detalhe da patente</h1>
+          <h1 data-testid="patent-detail-title">Detalhe da patente</h1>
           <p className="muted">{patent.publicationNumber || patent.id}</p>
         </div>
         <div className="stack-actions">

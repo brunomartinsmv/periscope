@@ -20,11 +20,16 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
+@Tag(name = "Auth")
 public class AuthResource {
 
     @Inject
@@ -36,6 +41,9 @@ public class AuthResource {
     @POST
     @Path("/login")
     @PermitAll
+    @Operation(summary = "Login", description = "Autentica e devolve JWT + usuário")
+    @APIResponse(responseCode = "200", description = "Token emitido")
+    @APIResponse(responseCode = "401", description = "Credenciais inválidas")
     public Response login(LoginRequest request) {
         if (request == null || request.username() == null || request.password() == null) {
             throw ApiException.badRequest("username and password are required");
@@ -50,6 +58,8 @@ public class AuthResource {
     @GET
     @Path("/me")
     @RolesAllowed({"ADMIN", "USER"})
+    @Operation(summary = "Usuário atual")
+    @SecurityRequirement(name = "bearerAuth")
     public UserDTO me(@Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         return UserDTO.from(user);
@@ -61,6 +71,9 @@ public class AuthResource {
     @POST
     @Path("/logout")
     @RolesAllowed({"ADMIN", "USER"})
+    @Operation(summary = "Logout stateless", description = "Cliente deve descartar o JWT")
+    @SecurityRequirement(name = "bearerAuth")
+    @APIResponse(responseCode = "204", description = "Sem conteúdo")
     public Response logout() {
         return Response.noContent().build();
     }

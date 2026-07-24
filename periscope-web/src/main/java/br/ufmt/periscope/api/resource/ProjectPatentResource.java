@@ -37,10 +37,16 @@ import dev.morphia.query.FindOptions;
 
 import static dev.morphia.query.filters.Filters.eq;
 
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
 @Path("/projects/{projectId}/patents")
 @Produces(MediaType.APPLICATION_JSON)
 @RequestScoped
 @RolesAllowed({"ADMIN", "USER"})
+@Tag(name = "Patents")
+@SecurityRequirement(name = "bearerAuth")
 public class ProjectPatentResource {
 
     @Inject
@@ -56,6 +62,7 @@ public class ProjectPatentResource {
     private ApiSecuritySupport securitySupport;
 
     @GET
+    @Operation(summary = "Listar patentes do projeto (paginado)")
     public PageDTO<PatentDTO> list(
             @PathParam("projectId") String projectId,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -92,6 +99,7 @@ public class ProjectPatentResource {
     @POST
     @Path("/import")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Operation(summary = "Importar patentes", description = "multipart: file + importer (ESPACENET|PATENTSCOPE|DPMA)")
     public ImportResultDTO importPatents(
             @PathParam("projectId") String projectId,
             MultipartFormDataInput input,

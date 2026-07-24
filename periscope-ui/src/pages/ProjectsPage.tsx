@@ -97,7 +97,7 @@ export function ProjectsPage() {
           <h1>Projetos</h1>
           <p>Gerencie os projetos de análise de patentes.</p>
         </div>
-        <button type="button" className="btn" onClick={openCreate}>
+        <button type="button" className="btn" data-testid="project-create" onClick={openCreate}>
           Novo projeto
         </button>
       </div>
@@ -117,7 +117,7 @@ export function ProjectsPage() {
           <div className="empty-block">Nenhum projeto encontrado. Crie o primeiro.</div>
         ) : (
           <div className="table-wrap">
-            <table className="data">
+            <table className="data" data-testid="projects-table">
               <thead>
                 <tr>
                   <th>Título</th>
@@ -131,9 +131,11 @@ export function ProjectsPage() {
               </thead>
               <tbody>
                 {data.map((project) => (
-                  <tr key={project.id}>
+                  <tr key={project.id} data-testid={`project-row-${project.id}`}>
                     <td>
-                      <Link to={`/projects/${project.id}/patents`}>{project.title}</Link>
+                      <Link to={`/projects/${project.id}/patents`} data-testid={`project-link-${project.id}`}>
+                        {project.title}
+                      </Link>
                       {project.isPublic ? (
                         <div>
                           <span className="badge">Público</span>
@@ -163,6 +165,7 @@ export function ProjectsPage() {
                         <button
                           type="button"
                           className="btn btn-danger btn-sm"
+                          data-testid={`project-delete-${project.id}`}
                           onClick={() => {
                             if (confirm(`Excluir o projeto "${project.title}"?`)) {
                               deleteMutation.mutate(project.id);
@@ -186,11 +189,12 @@ export function ProjectsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
       >
-        <form className="form-grid" onSubmit={onSubmit}>
+        <form className="form-grid" onSubmit={onSubmit} data-testid="project-form">
           <div className="field">
             <label htmlFor="title">Título</label>
             <input
               id="title"
+              data-testid="project-title"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               required
@@ -200,6 +204,7 @@ export function ProjectsPage() {
             <label htmlFor="description">Descrição</label>
             <textarea
               id="description"
+              data-testid="project-description"
               rows={3}
               value={form.description || ''}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -214,7 +219,7 @@ export function ProjectsPage() {
             Projeto público
           </label>
           <div className="stack-actions">
-            <button type="submit" className="btn" disabled={saveMutation.isPending}>
+            <button type="submit" className="btn" data-testid="project-save" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Salvando…' : 'Salvar'}
             </button>
             <button

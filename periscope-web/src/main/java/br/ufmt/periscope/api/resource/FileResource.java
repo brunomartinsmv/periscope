@@ -33,6 +33,9 @@ import java.util.List;
 import java.util.Map;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 
@@ -41,6 +44,8 @@ import static dev.morphia.query.filters.Filters.eq;
 @Path("/files")
 @RequestScoped
 @RolesAllowed({"ADMIN", "USER"})
+@Tag(name = "Files")
+@SecurityRequirement(name = "bearerAuth")
 public class FileResource {
 
     @Inject
@@ -58,6 +63,7 @@ public class FileResource {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(summary = "Download de arquivo GridFS")
     public Response download(@PathParam("id") String id, @Context SecurityContext securityContext) {
         securitySupport.requireUser(securityContext);
         if (id == null || !ObjectId.isValid(id)) {
@@ -88,6 +94,7 @@ public class FileResource {
     @Path("/patents/{patentId}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Upload de anexo de patente", description = "kind=presentation|patentInfo")
     public PatentDTO uploadPatentFile(
             @PathParam("patentId") String patentId,
             @QueryParam("kind") String kind,

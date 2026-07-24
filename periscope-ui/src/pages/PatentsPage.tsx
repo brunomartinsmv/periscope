@@ -113,7 +113,7 @@ export function PatentsPage() {
         ) : (
           <>
             <div className="table-wrap">
-              <table className="data">
+              <table className="data" data-testid="patents-table">
                 <thead>
                   <tr>
                     <th>Título</th>
@@ -127,9 +127,12 @@ export function PatentsPage() {
                 </thead>
                 <tbody>
                   {patentsQuery.data.content.map((patent) => (
-                    <tr key={patent.id}>
+                    <tr key={patent.id} data-testid={`patent-row-${patent.id}`}>
                       <td>
-                        <Link to={`/projects/${projectId}/patents/${patent.id}`}>
+                        <Link
+                          to={`/projects/${projectId}/patents/${patent.id}`}
+                          data-testid={`patent-link-${patent.id}`}
+                        >
                           {patent.title || '(sem título)'}
                         </Link>
                       </td>

@@ -70,12 +70,22 @@ run it if you wipe `~/.m2`. The parent POM also exposes
 ### Tests / lint
 - Unitários: `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 && mvn -B test`
   (ou `mvn -B clean verify`). Cobrem Fast-Join, YamlLoader, PDFBox, importadores
-  Espacenet/Patentscope/DPMA. Não precisam de Mongo nem Docker.
+  Espacenet/Patentscope/DPMA, JWT/DTOs da API. Não precisam de Mongo nem Docker.
 - Integração (Testcontainers MongoDB 7): `mvn -B verify -Pit`. Requer Docker
   (disponível no GitHub Actions; **não** nesta VM — os `*IT.java` são pulados
   via `@Testcontainers(disabledWithoutDocker = true)` / assumption).
-- CI: `.github/workflows/ci.yml` (build, integration `-Pit`, OWASP dependency-check
-  não bloqueante).
+- Frontend (`periscope-ui`): `npm ci && npm run lint && npm run build`.
+- E2E Playwright: `cd periscope-ui && npm run test:e2e` (default
+  `E2E_BASE_URL=http://localhost:8080/periscope/app/`). Instalar browser:
+  `npx playwright install --with-deps chromium` (sem `--with-deps` se apt/sudo falhar).
+  Specs: `e2e/login|projects|patents|reports|harmonization.spec.ts`.
+- OpenAPI: subsystem WildFly `microprofile-openapi-smallrye` —
+  `./tools/enable-wildfly-openapi.sh` (jboss-cli embed-server, idempotente) +
+  restart. Documento em `GET http://localhost:8080/openapi`. Anotações em
+  `JaxRsActivator` e resources (`@Tag` / `@Operation` / `@SecurityScheme` bearer JWT).
+- CI: `.github/workflows/ci.yml` (build, integration `-Pit`, frontend, OWASP
+  dependency-check não bloqueante; E2E só em `workflow_dispatch`).
+  Template de staging inerte: `.github/workflows/deploy-staging.yml`.
 - Cobertura: JaCoCo 0.8.12 no ciclo `test`. Relatórios em `*/target/site/jacoco/`.
 - Health: `GET http://localhost:8080/periscope/rest/health` → JSON
   `status` / `mongodb` / `luceneIndex` (200 se UP, 503 se DOWN).
@@ -84,5 +94,5 @@ run it if you wipe `~/.m2`. The parent POM also exposes
   `Authorization: Bearer <token>`. Ver `docs/modernization/fase-07-spa.md`.
   Env: `PERISCOPE_JWT_SECRET`, `PERISCOPE_CORS_ORIGINS`,
   `PERISCOPE_JWT_EXPIRATION_HOURS`.
-- O feature Cucumber `periscope-web/.../login.feature` ainda não tem runner
-  (E2E fica para Fase 8b). Não há lint Spotless/ESLint nesta fase.
+- SPA: `http://localhost:8080/periscope/app/` (ou `npm run dev` na 5173).
+- Não há lint Spotless no backend; ESLint/Prettier no frontend.
