@@ -20,7 +20,7 @@ import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.qualifier.CurrentProject;
 import br.ufmt.periscope.repository.PatentRepository;
 
-import com.github.jmkgreen.morphia.Datastore;
+import dev.morphia.Datastore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

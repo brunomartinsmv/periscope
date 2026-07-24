@@ -2,8 +2,8 @@ package br.ufmt.periscope.model;
 
 import java.io.Serializable;
 
-import com.github.jmkgreen.morphia.annotations.Embedded;
-import com.github.jmkgreen.morphia.annotations.Transient;
+import dev.morphia.annotations.Embedded;
+import dev.morphia.annotations.Transient;
 
 @Embedded
 public class Applicant implements Serializable, Comparable<Applicant> {
@@ -11,13 +11,9 @@ public class Applicant implements Serializable, Comparable<Applicant> {
     private static final long serialVersionUID = 8189474165213004815L;
     private String name;
     private String acronym;
-    @Embedded
     private History history;
-    @Embedded
     private Country country;
-    @Embedded
     private State state;
-    @Embedded
     private ApplicantType type;
     private Boolean harmonized = false;
     @Transient

@@ -8,30 +8,27 @@ import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.State;
 import br.ufmt.periscope.report.Pair;
 import br.ufmt.periscope.util.Filters;
-import com.github.jmkgreen.morphia.Datastore;
-import com.github.jmkgreen.morphia.mapping.Mapper;
-import com.github.jmkgreen.morphia.mapping.cache.EntityCache;
 import com.google.common.collect.HashMultiset;
-import com.mongodb.AggregationOutput;
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Projections;
+import dev.morphia.Datastore;
+import dev.morphia.query.FindOptions;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import org.apache.lucene.document.Document;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 /**
- * 
  * This class have the methods with the queries for Inventor
  */
 @RequestScoped
@@ -47,30 +44,30 @@ public class InventorRepository {
     private @Inject
     FuzzyTokenSimilaritySearch fs;
 
+    private MongoCollection<Document> patentDocs() {
+        return ds.getCollection(Patent.class).withDocumentClass(Document.class);
+    }
+
     public Inventor getInventorByName(String name) {
-
-        Inventor ret = null;
-        BasicDBObject eleMatch = new BasicDBObject("$elemMatch", new BasicDBObject("name", name));
-        BasicDBObject inventors = new BasicDBObject("inventors", eleMatch);
-        BasicDBObject keys = new BasicDBObject("inventors", 1);
-        DBCursor cursor = ds.getCollection(Patent.class).find(inventors, keys);
-        int docCount = ds.getCollection(Patent.class).find(inventors, keys).count();
-        if (cursor.hasNext()) {
-            Mapper mapper = ds.getMapper();
-            EntityCache ec = mapper.createEntityCache();
-
-            BasicDBList objList = (BasicDBList) cursor.next().get("inventors");
-            for (Object obj : objList) {
-                ret = (Inventor) mapper.fromDBObject(Inventor.class, (DBObject) obj, ec);
-                if (ret.getName().equals(name)) {
-                    ret.setDocumentCount(docCount);
-                    return ret;
+        long docCount = ds.find(Patent.class)
+                .filter(dev.morphia.query.filters.Filters.elemMatch("inventors",
+                        dev.morphia.query.filters.Filters.eq("name", name)))
+                .count();
+        Patent patent = ds.find(Patent.class)
+                .filter(dev.morphia.query.filters.Filters.elemMatch("inventors",
+                        dev.morphia.query.filters.Filters.eq("name", name)))
+                .first();
+        if (patent != null && patent.getInventors() != null) {
+            for (Inventor inventor : patent.getInventors()) {
+                if (inventor.getName() != null && inventor.getName().equals(name)) {
+                    inventor.setDocumentCount((int) docCount);
+                    return inventor;
                 }
             }
         }
         return null;
-
     }
+
     /**
      * This method executes a query that's responsible to bring the MainInventor chart data.
      * @param currentProject Project - Project where the query must be executed.
@@ -79,71 +76,44 @@ public class InventorRepository {
      * @return List&lt;Pair&gt; - List with the values that should be showed in the chart.
      */
     public List<Pair> updateInventors(Project currentProject, int limit, Filters filtro) {
+        List<Bson> pipeline = new ArrayList<Bson>();
 
-        /**
-         * db.Patent.aggregate( {$match:{"project.$id":new
-         * ObjectId("51db042d44ae70d2d3649c20")}}, {$match:{blacklisted:false}},
-         * {$unwind:"$inventors"},
-         * {$group:{_id:"$inventors",applicationPerInventor:{$sum:1}}},
-         * {$sort:{applicationPerInventor:-1}}, { $limit : 5 } );
-         */
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
-
-        DBObject matchProj = new BasicDBObject();
-        matchProj.put("$match",
-                new BasicDBObject("project.$id", currentProject.getId()));
+        pipeline.add(Aggregates.match(
+                com.mongodb.client.model.Filters.eq("project.$id", currentProject.getId())));
 
         if (filtro.isComplete()) {
-            DBObject matchComplete = new BasicDBObject();
-            matchComplete.put("$match", new BasicDBObject("completed", filtro.isComplete()));
-            parametros.add(matchComplete);
+            pipeline.add(Aggregates.match(
+                    com.mongodb.client.model.Filters.eq("completed", filtro.isComplete())));
         }
 
-        DBObject matchDate = new BasicDBObject();
-//        System.out.println(filtro.getSelecionaData());
         if (filtro.getSelecionaData() == 1) {
-            matchDate.put("$match", new BasicDBObject("publicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim())));
+            pipeline.add(Aggregates.match(new Document("publicationDate",
+                    new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()))));
         } else {
-            matchDate.put("$match", new BasicDBObject("applicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim())));
+            pipeline.add(Aggregates.match(new Document("applicationDate",
+                    new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()))));
         }
-        parametros.add(matchDate);
 
-        DBObject matchBlacklist = new BasicDBObject();
-        matchBlacklist.put("$match", new BasicDBObject("blacklisted", false));
-        parametros.add(matchBlacklist);
+        pipeline.add(Aggregates.match(
+                com.mongodb.client.model.Filters.eq("blacklisted", false)));
+        pipeline.add(Aggregates.unwind("$inventors"));
+        pipeline.add(Aggregates.group("$inventors",
+                Accumulators.sum("applicationPerInventor", 1)));
+        pipeline.add(Aggregates.sort(new Document("applicationPerInventor", -1)));
+        pipeline.add(Aggregates.limit(limit));
 
-        DBObject unwind = new BasicDBObject("$unwind", "$inventors");
-        parametros.add(unwind);
-
-        DBObject group = new BasicDBObject();
-        parametros.add(group);
-        DBObject fields = new BasicDBObject("_id", "$inventors");
-        fields.put("applicationPerInventor", new BasicDBObject("$sum", 1));
-        group.put("$group", fields);
-
-        DBObject sort = new BasicDBObject("$sort", new BasicDBObject(
-                "applicationPerInventor", -1));
-        parametros.add(sort);
-
-        DBObject pipeLimit = new BasicDBObject("$limit", limit);
-        parametros.add(pipeLimit);
-
-        DBObject[] parameters = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(matchProj, parameters);
-
-        BasicDBList outputResult = (BasicDBList) output.getCommandResult().get(
-                "result");
+        List<Document> outputResult = patentDocs().aggregate(pipeline)
+                .into(new ArrayList<Document>());
 
         List<Pair> pairs = new ArrayList<Pair>();
-        for (Object object : outputResult) {
-            DBObject aux = (DBObject) object;
-            DBObject inventorName = (DBObject) aux.get("_id");
+        for (Document aux : outputResult) {
+            Document inventorName = aux.get("_id", Document.class);
+            if (inventorName == null || inventorName.get("name") == null) {
+                continue;
+            }
             String inventor = inventorName.get("name").toString();
-            Integer count = (Integer) aux.get("applicationPerInventor");
-
-            pairs.add(new Pair(inventor, count));
+            Integer countValue = toInt(aux.get("applicationPerInventor"));
+            pairs.add(new Pair(inventor, countValue));
         }
         return pairs;
     }
@@ -155,30 +125,26 @@ public class InventorRepository {
      */
     public ArrayList<Inventor> getInventors(Project currentProject) {
         Map<String, Inventor> map = new HashMap<String, Inventor>();
-
         HashMultiset<String> bag = HashMultiset.create();
 
-        BasicDBObject where = new BasicDBObject();
-        where.put("project.$id", currentProject.getId());
-        where.put("inventors", new BasicDBObject("$exists", true));
+        FindOptions options = new FindOptions();
+        options.projection().include("inventors");
 
-        BasicDBObject keys = new BasicDBObject();
-        keys.put("inventors", 1);
+        List<Patent> patents = ds.find(Patent.class)
+                .filter(dev.morphia.query.filters.Filters.eq("project", currentProject),
+                        dev.morphia.query.filters.Filters.exists("inventors"))
+                .iterator(options)
+                .toList();
 
-        DBCursor cursor = ds.getCollection(Patent.class).find(where, keys);
-        Mapper mapper = ds.getMapper();
-        EntityCache ec = mapper.createEntityCache();
-        while (cursor.hasNext()) {
-
-            BasicDBList objList = (BasicDBList) cursor.next().get("inventors");
-            Iterator<Object> itList = objList.iterator();
-            while (itList.hasNext()) {
-                Inventor pa = (Inventor) mapper.fromDBObject(Inventor.class, (DBObject) itList.next(), ec);
-                bag.add(pa.getName());
-                pa.setDocumentCount(bag.count(pa.getName()));
-                map.put(pa.getName(), pa);
+        for (Patent patent : patents) {
+            if (patent.getInventors() == null) {
+                continue;
             }
-
+            for (Inventor inv : patent.getInventors()) {
+                bag.add(inv.getName());
+                inv.setDocumentCount(bag.count(inv.getName()));
+                map.put(inv.getName(), inv);
+            }
         }
         ArrayList<Inventor> inventors = new ArrayList<Inventor>(map.values());
         Collections.sort(inventors);
@@ -192,166 +158,151 @@ public class InventorRepository {
     * @return List&lt;String&gt; List with the inventors of the Project.
     */
     public List<String> getInventors(Project project, String begins) {
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
-        DBObject matchProject = new BasicDBObject("$match", new BasicDBObject("project.$id", project.getId()).append("blacklisted", false));
-        DBObject unwind = new BasicDBObject("$unwind", "$inventors");
-        parametros.add(unwind);
-        DBObject matchName = new BasicDBObject("$match", new BasicDBObject("inventors.name", new BasicDBObject("$regex", "^" + begins).append("$options", "i")));
-        parametros.add(matchName);
-        DBObject projection = new BasicDBObject("$project", new BasicDBObject("inventors", 1));
-        parametros.add(projection);
-        DBObject group = new BasicDBObject("$group", new BasicDBObject("_id", "$inventors.name"));
-        parametros.add(group);
-        DBObject parameters[] = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(matchProject, parameters);
-        BasicDBList outputList = (BasicDBList) output.getCommandResult().get("result");
+        List<Bson> pipeline = new ArrayList<Bson>();
+        pipeline.add(Aggregates.match(com.mongodb.client.model.Filters.and(
+                com.mongodb.client.model.Filters.eq("project.$id", project.getId()),
+                com.mongodb.client.model.Filters.eq("blacklisted", false))));
+        pipeline.add(Aggregates.unwind("$inventors"));
+        pipeline.add(Aggregates.match(com.mongodb.client.model.Filters.regex(
+                "inventors.name", "^" + begins, "i")));
+        pipeline.add(Aggregates.project(Projections.include("inventors")));
+        pipeline.add(Aggregates.group("$inventors.name"));
+
+        List<Document> output = patentDocs().aggregate(pipeline).into(new ArrayList<Document>());
         List<String> lista = new ArrayList<String>();
-        for (Object inventor : outputList) {
-            DBObject aux = (DBObject) inventor;
-            String nome = aux.get("_id").toString();
-            lista.add(nome);
+        for (Document inventor : output) {
+            Object id = inventor.get("_id");
+            if (id != null) {
+                lista.add(id.toString());
+            }
         }
         return lista;
-
     }
 
     /**
-     * 
-     * 
+     *
+     *
      * @param project
      * @param top
      * @param names
-     * @return 
+     * @return
      */
     public Set<String> getInventorSugestions(Project project, int top, String... names) {
         Set<String> results = new HashSet<String>();
-        
+
         for (String name : names) {
-            List<Document> docs = fs.search("inventor", project.getId().toString(), name, top);
-            for (Document doc : docs)
+            List<org.apache.lucene.document.Document> docs =
+                    fs.search("inventor", project.getId().toString(), name, top);
+            for (org.apache.lucene.document.Document doc : docs) {
                 results.add(doc.get("inventor"));
+            }
         }
-        
+
         return results;
     }
 
-    public List<Inventor> load(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters, List<Inventor> list) {
+    public List<Inventor> load(int first, int pageSize, String sortField, int sortOrder,
+            Map<String, String> filters, List<Inventor> list) {
 
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
-        ArrayList<DBObject> parametrosGroup = new ArrayList<DBObject>();
+        Document matchProj = new Document("project.$id", currentProject.getId())
+                .append("blacklisted", false);
 
-        DBObject match = new BasicDBObject();
+        List<Bson> parametros = new ArrayList<Bson>();
+        List<Bson> parametrosGroup = new ArrayList<Bson>();
 
-        DBObject matchProj = new BasicDBObject();
-        matchProj.put("project.$id", currentProject.getId());
-        matchProj.put("blacklisted", false);
+        parametros.add(Aggregates.unwind("$inventors"));
+        parametrosGroup.add(Aggregates.unwind("$inventors"));
 
-        DBObject unwind = new BasicDBObject("$unwind", "$inventors");
-        parametros.add(unwind);
-        parametrosGroup.add(unwind);
-
-        DBObject matchFilterItem = new BasicDBObject();
-        for (Map.Entry<String, String> entry : filters.entrySet()) {
-            String column = entry.getKey();
-            String value = entry.getValue();
-            DBObject regex;
-            if (searchType != null && searchType.equals(1)) {
-                regex = new BasicDBObject("$regex", "^" + value).append("$options", "i");
-            } else {
-                regex = new BasicDBObject("$regex", value).append("$options", "i");
+        Document matchFilterItem = new Document();
+        if (filters != null) {
+            for (Map.Entry<String, String> entry : filters.entrySet()) {
+                String column = entry.getKey();
+                String value = entry.getValue();
+                Document regexDoc;
+                if (searchType != null && searchType.equals(1)) {
+                    regexDoc = new Document("$regex", "^" + value).append("$options", "i");
+                } else {
+                    regexDoc = new Document("$regex", value).append("$options", "i");
+                }
+                matchFilterItem.put("inventors." + column, regexDoc);
             }
-            matchFilterItem.put("inventors." + column, regex);
         }
 
-//        DBObject matchSearch = new BasicDBObject("$match", matchFilterItem);
-//        parametros.add(matchSearch);
-//        DBObject matchFilter = new BasicDBObject();
         if (list != null) {
-            BasicDBList lista = new BasicDBList();
-            List<String> t = new ArrayList<String>();
+            List<String> names = new ArrayList<String>();
             for (Inventor inv : list) {
-                t.add(inv.getName());
+                names.add(inv.getName());
             }
-            lista.addAll(t);
-            matchFilterItem.put("inventors.name", new BasicDBObject("$nin", lista));
+            matchFilterItem.put("inventors.name", new Document("$nin", names));
         }
 
-        if (matchFilterItem.keySet().size() > 0) {
-            DBObject matchEdit = new BasicDBObject("$match", matchFilterItem);
+        if (!matchFilterItem.keySet().isEmpty()) {
+            Bson matchEdit = Aggregates.match(matchFilterItem);
             parametros.add(matchEdit);
             parametrosGroup.add(matchEdit);
         }
 
-        DBObject idData = new BasicDBObject("name", "$inventors.name");
-        idData.put("country", "$inventors.country");
-        idData.put("state", "$inventors.state");
-        idData.put("acronym", "$inventors.acronym");
-        idData.put("harmonized", "$inventors.harmonized");
-        DBObject fields = new BasicDBObject("_id", idData);
-        fields.put("documentCount", new BasicDBObject("$sum", 1));
-        DBObject group = new BasicDBObject();
-        group.put("$group", fields);
+        Document idData = new Document("name", "$inventors.name")
+                .append("country", "$inventors.country")
+                .append("state", "$inventors.state")
+                .append("acronym", "$inventors.acronym")
+                .append("harmonized", "$inventors.harmonized");
+        Document groupFields = new Document("_id", idData)
+                .append("documentCount", new Document("$sum", 1));
+        Bson group = new Document("$group", groupFields);
         parametros.add(group);
         parametrosGroup.add(group);
 
-        fields = new BasicDBObject("_id", "nome");
-        fields.put("documentCount", new BasicDBObject("$sum", 1));
-        DBObject groupTotal = new BasicDBObject();
-        groupTotal.put("$group", fields);
-        parametrosGroup.add(groupTotal);
+        Document groupTotalFields = new Document("_id", "nome")
+                .append("documentCount", new Document("$sum", 1));
+        parametrosGroup.add(new Document("$group", groupTotalFields));
 
         if (sortField != null) {
             if ("documentCount".equals(sortField)) {
-                DBObject sort = new BasicDBObject("$sort", new BasicDBObject(sortField, (sortOrder == 0 ? 1 : -1)));
-                parametros.add(sort);
+                parametros.add(Aggregates.sort(new Document(sortField, sortOrder == 0 ? 1 : -1)));
             } else {
-                DBObject sort = new BasicDBObject("$sort", new BasicDBObject("_id." + sortField, (sortOrder == 0 ? 1 : -1)));
-                parametros.add(sort);
+                parametros.add(Aggregates.sort(
+                        new Document("_id." + sortField, sortOrder == 0 ? 1 : -1)));
             }
         } else {
-            DBObject sort = new BasicDBObject("$sort", new BasicDBObject("_id.name", 1));
-            parametros.add(sort);
+            parametros.add(Aggregates.sort(new Document("_id.name", 1)));
         }
 
-        DBObject skip = new BasicDBObject("$skip", first);
-        parametros.add(skip);
+        parametros.add(Aggregates.skip(first));
+        parametros.add(Aggregates.limit(pageSize));
 
-        DBObject limit = new BasicDBObject("$limit", pageSize);
-        parametros.add(limit);
+        List<Bson> totalPipeline = new ArrayList<Bson>();
+        totalPipeline.add(Aggregates.match(matchProj));
+        totalPipeline.addAll(parametrosGroup);
 
-        DBObject[] parameters = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-
-        DBObject[] parametersGroup = new DBObject[parametrosGroup.size()];
-        parametersGroup = parametrosGroup.toArray(parametersGroup);
-
-        match.put("$match", matchProj);
-        AggregationOutput outputTotal = ds.getCollection(Patent.class).aggregate(match, parametersGroup);
-        BasicDBList outputListTotal = (BasicDBList) outputTotal.getCommandResult().get("result");
-        for (Object patent : outputListTotal) {
-            DBObject result = (DBObject) patent;
-            this.setCount(Integer.parseInt(result.get("documentCount").toString()));
+        List<Document> outputListTotal = patentDocs().aggregate(totalPipeline)
+                .into(new ArrayList<Document>());
+        for (Document result : outputListTotal) {
+            this.setCount(toInt(result.get("documentCount")));
             break;
         }
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(match, parameters);
 
-        BasicDBList outputList = (BasicDBList) output.getCommandResult().get("result");
+        List<Bson> pagePipeline = new ArrayList<Bson>();
+        pagePipeline.add(Aggregates.match(matchProj));
+        pagePipeline.addAll(parametros);
 
-//        this.setCount(output.);
+        List<Document> outputList = patentDocs().aggregate(pagePipeline)
+                .into(new ArrayList<Document>());
+
         List<Inventor> datasource = new ArrayList<Inventor>();
-        for (Object patent : outputList) {
-            DBObject aux = (DBObject) patent;
-            DBObject result = (DBObject) aux.get("_id");
+        for (Document aux : outputList) {
+            Document result = aux.get("_id", Document.class);
+            if (result == null || result.get("name") == null) {
+                continue;
+            }
             Inventor inventor = new Inventor();
             inventor.setName(result.get("name").toString());
             if (result.get("acronym") != null) {
                 inventor.setAcronym(result.get("acronym").toString());
             }
 
-            DBObject country = (DBObject) result.get("country");
+            Document country = result.get("country", Document.class);
             if (country != null) {
-
                 Country realCountry = new Country();
                 realCountry.setAcronym((String) country.get("acronym"));
                 realCountry.setName((String) country.get("name"));
@@ -360,7 +311,7 @@ public class InventorRepository {
                 inventor.setCountry(null);
             }
 
-            DBObject state = (DBObject) result.get("state");
+            Document state = result.get("state", Document.class);
             if (state != null) {
                 State realState = new State();
                 realState.setAcronym((String) state.get("acronym"));
@@ -370,8 +321,8 @@ public class InventorRepository {
             } else {
                 inventor.setState(null);
             }
-            inventor.setHarmonized((Boolean) result.get("harmonized"));
-            inventor.setDocumentCount((Integer) aux.get("documentCount"));
+            inventor.setHarmonized(result.getBoolean("harmonized"));
+            inventor.setDocumentCount(toInt(aux.get("documentCount")));
             datasource.add(inventor);
         }
 
@@ -379,43 +330,39 @@ public class InventorRepository {
     }
 
     public boolean exists(Inventor inventor) {
+        List<Bson> pipeline = new ArrayList<Bson>();
+        pipeline.add(Aggregates.match(new Document("project.$id", currentProject.getId())
+                .append("blacklisted", false)));
+        pipeline.add(Aggregates.unwind("$inventors"));
+        pipeline.add(Aggregates.match(new Document("inventors.country.acronym",
+                inventor.getCountry().getAcronym())
+                .append("inventors.name", inventor.getName())));
+        pipeline.add(Aggregates.group(new Document("name", "$inventors.name")));
 
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
-
-        DBObject matchProj = new BasicDBObject();
-        matchProj.put("project.$id", currentProject.getId());
-        matchProj.put("blacklisted", false);
-        DBObject matchP = new BasicDBObject("$match", matchProj);
-
-        DBObject unwind = new BasicDBObject("$unwind", "$inventors");
-        parametros.add(unwind);
-
-        DBObject fields = new BasicDBObject("inventors.country.acronym", inventor.getCountry().getAcronym());
-        fields.put("inventors.name", inventor.getName());
-        DBObject match = new BasicDBObject("$match", fields);
-        parametros.add(match);
-
-        DBObject idData = new BasicDBObject("name", "$inventors.name");
-        DBObject field = new BasicDBObject("_id", idData);
-        DBObject group = new BasicDBObject("$group", field);
-        parametros.add(group);
-
-        DBObject[] parameters = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(matchP, parameters);
-
-        BasicDBList outputList = (BasicDBList) output.getCommandResult().get("result");
-        return outputList.size() == 0;
-
+        List<Document> outputList = patentDocs().aggregate(pipeline)
+                .into(new ArrayList<Document>());
+        return outputList.isEmpty();
     }
 
-    public List<Inventor> load(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters) {
+    public List<Inventor> load(int first, int pageSize, String sortField, int sortOrder,
+            Map<String, String> filters) {
         return load(first, pageSize, sortField, sortOrder, filters, null);
     }
+
+    private static int toInt(Object value) {
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return Integer.parseInt(value.toString());
+    }
+
     public int getCount() {
         return count;
     }
+
     public void setCount(int count) {
         this.count = count;
     }

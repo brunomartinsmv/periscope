@@ -1,10 +1,9 @@
 package br.ufmt.periscope.model;
 
-import com.github.jmkgreen.morphia.annotations.Embedded;
-import com.github.jmkgreen.morphia.annotations.Entity;
-import com.github.jmkgreen.morphia.annotations.Id;
-import com.github.jmkgreen.morphia.annotations.Reference;
-import com.github.jmkgreen.morphia.annotations.Transient;
+import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Id;
+import dev.morphia.annotations.Reference;
+import dev.morphia.annotations.Transient;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
@@ -19,16 +18,12 @@ public class Rule implements Serializable {
     private String name;
     private String acronym;
 
-    @Embedded
     private Set<String> substitutions;
 
-    @Embedded
     private Country country;
 
-    @Embedded
     private State state;
 
-    @Embedded
     private ApplicantType nature;
     private RuleType type;
 

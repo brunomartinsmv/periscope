@@ -13,160 +13,85 @@ import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.Rule;
 import br.ufmt.periscope.model.State;
 import br.ufmt.periscope.model.User;
-import com.mongodb.gridfs.GridFS;
-import java.util.ArrayList;
-import java.util.List;
+import com.mongodb.client.gridfs.GridFSBucket;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 /**
- * - @Named<BR/>
- * Classe responsável por criar as instâncias de todos os objetos do modelo do projeto via CDI
+ * Factory CDI para instâncias do modelo e GridFSBucket.
  */
 @Named
 public class ResourcesLazy {
 
-    private @Inject
-    Instance<Applicant> applicantProvider;
-    private @Inject
-    Instance<ApplicantType> applicantTypeProvider;
-    private @Inject
-    Instance<Classification> classificationProvider;
-    private @Inject
-    Instance<Country> countryProvider;
-    private @Inject
-    Instance<Files> filesProvider;
-    private @Inject
-    Instance<History> historyProvider;
-    private @Inject
-    Instance<Inventor> inventorProvider;
-    private @Inject
-    Instance<Patent> patentProvider;
-    private @Inject
-    Instance<Priority> priorityProvider;
-    private @Inject
-    Instance<Project> projectProvider;
-    private @Inject
-    Instance<Rule> ruleProvider;
-    private @Inject
-    Instance<State> stateProvider;
-    private @Inject
-    Instance<User> userProvider;
-    private @Inject
-    Instance<GridFS> fsProvider;
-    
-    /**
-     * Método utilizado para criar uma nova instância de depositante utilizando CDI
-     * @return uma instância de um depositante
-     */
+    private @Inject Instance<Applicant> applicantProvider;
+    private @Inject Instance<ApplicantType> applicantTypeProvider;
+    private @Inject Instance<Classification> classificationProvider;
+    private @Inject Instance<Country> countryProvider;
+    private @Inject Instance<Files> filesProvider;
+    private @Inject Instance<History> historyProvider;
+    private @Inject Instance<Inventor> inventorProvider;
+    private @Inject Instance<Patent> patentProvider;
+    private @Inject Instance<Priority> priorityProvider;
+    private @Inject Instance<Project> projectProvider;
+    private @Inject Instance<Rule> ruleProvider;
+    private @Inject Instance<State> stateProvider;
+    private @Inject Instance<User> userProvider;
+    private @Inject Instance<GridFSBucket> fsProvider;
+
     public Applicant getApplicant() {
         return applicantProvider.get();
     }
 
-    /**
-     *
-     * Método utilizado para criar uma nova instância da natureza de depositante utilizando CDI
-     * @return uma instância de uma natureza de depositante
-     */
     public ApplicantType getApplicantType() {
         return applicantTypeProvider.get();
     }
 
-    /**
-     *
-     * Método utilizado para criar uma nova instância de classificação utilizando CDI
-     * @return uma instância de uma classificação
-     */
     public Classification getClassification() {
         return classificationProvider.get();
     }
 
-    /**
-     * Método utilizado para criar uma nova instância de país utilizando CDI
-     * @return uma instância de um país
-     */
     public Country getCountry() {
         return countryProvider.get();
     }
 
-    /**
-     * Método utilizado para criar uma nova instância de arquivo utilizando CDI
-     * @return uma instância de um arquivo
-     */
     public Files getFiles() {
         return filesProvider.get();
     }
 
-    /**
-     * Método utilizado para criar uma nova instância de histórico utilizando CDI
-     * @return uma instância de um histórico
-     */
     public History getHistory() {
         return historyProvider.get();
     }
 
-    /**
-     * Método utilizado para criar uma nova instância de inventor utilizando CDI
-     * @return uma instância de um inventor
-     */
     public Inventor getInventor() {
         return inventorProvider.get();
     }
 
-    /**
-     * Método utilizado para criar uma nova instância de patente utilizando CDI
-     * @return uma instância de uma patente
-     */
     public Patent getPatent() {
         return patentProvider.get();
     }
 
-    /**
-     * Método utilizado para criar uma nova instância de prioridade utilizando CDI
-     * @return uma instância de uma prioridade
-     */
-    public Priority getPriority(){
+    public Priority getPriority() {
         return priorityProvider.get();
     }
-    
-    /**
-     * Método utilizado para criar uma nova instância de projeto utilizando CDI
-     * @return uma instância de um projeto
-     */
-    public Project getProject(){
+
+    public Project getProject() {
         return projectProvider.get();
     }
-                    
-    /**
-     * Método utilizado para criar uma nova instância de regra utilizando CDI
-     * @return uma instância de uma regra
-     */
-    public Rule getRule(){
+
+    public Rule getRule() {
         return ruleProvider.get();
     }
-    
-    /**
-     * Método utilizado para criar uma nova instância de estado utilizando CDI
-     * @return uma instância de um estado
-     */
-    public State getState(){
+
+    public State getState() {
         return stateProvider.get();
     }
-    
-    /**
-     * Método utilizado para criar uma nova instância de usuário utilizando CDI
-     * @return uma instância de um usuário
-     */
-    public User getUser(){
+
+    public User getUser() {
         return userProvider.get();
     }
-    
-    /**
-     * Método utilizado para criar uma nova instância de FileSystem de conexão com o banco utilizando CDI
-     * @return uma instância de um FileSystem de conexão com banco
-     */
-    public GridFS getFS(){
+
+    public GridFSBucket getFS() {
         return fsProvider.get();
     }
 }

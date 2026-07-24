@@ -7,7 +7,11 @@ import jakarta.inject.Named;
 
 import br.ufmt.periscope.model.Country;
 
-import com.github.jmkgreen.morphia.Datastore;
+import dev.morphia.Datastore;
+import dev.morphia.query.FindOptions;
+import dev.morphia.query.Sort;
+
+import static dev.morphia.query.filters.Filters.eq;
 
 @Named
 public class CountryRepository {
@@ -16,10 +20,14 @@ public class CountryRepository {
     private Datastore ds;
 
     public List<Country> getAll() {
-        return ds.createQuery(Country.class).order("name").asList();
+        return ds.find(Country.class)
+                .iterator(new FindOptions().sort(Sort.ascending("name")))
+                .toList();
     }
 
     public Country getCountryByAcronym(String acronym) {
-        return ds.createQuery(Country.class).field("acronym").equal(acronym).get();
+        return ds.find(Country.class)
+                .filter(eq("acronym", acronym))
+                .first();
     }
 }

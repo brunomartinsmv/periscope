@@ -1,7 +1,7 @@
 package br.ufmt.periscope.model;
 
-import com.github.jmkgreen.morphia.annotations.Embedded;
-import com.github.jmkgreen.morphia.annotations.Transient;
+import dev.morphia.annotations.Embedded;
+import dev.morphia.annotations.Transient;
 import java.io.Serializable;
 
 @Embedded
@@ -9,11 +9,8 @@ public class Inventor implements Serializable, Comparable<Inventor> {
 
     private String name;
     private String acronym;
-    @Embedded
     private History history;
-    @Embedded
     private Country country;
-    @Embedded
     private State state;
     private Boolean harmonized = false;
     @Transient

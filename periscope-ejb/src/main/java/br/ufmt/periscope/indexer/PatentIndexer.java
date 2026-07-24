@@ -21,7 +21,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 
@@ -61,9 +60,6 @@ public class PatentIndexer {
         try {
             writer.deleteDocuments(new Term("project", project.getId().toString()));
             log.info("Indices deletados com sucesso");
-        } catch (CorruptIndexException e) {
-            log.info("Ocorreu algum erro deletando os indices.");
-            e.printStackTrace();
         } catch (IOException e) {
             log.info("Ocorreu algum erro deletando os indices.");
             e.printStackTrace();

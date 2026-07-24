@@ -2,10 +2,10 @@
 
 ## Cursor Cloud specific instructions
 
-Periscope is a Java EE 6 patent-analysis web app (UFMT). It is a Maven multi-module
+Periscope is a Java EE / Jakarta patent-analysis web app (UFMT). It is a Maven multi-module
 project: `periscope-ejb` (EJB jar, also bundled into the war), `periscope-web`
-(war), `periscope-ear` (ear). Persistence is **MongoDB** via Morphia (no JPA/SQL);
-harmonization uses **Lucene 6**; the UI is JSF 2 + PrimeFaces 3.4.2 (Portuguese).
+(war), `periscope-ear` (ear). Persistence is **MongoDB** via Morphia 2 (no JPA/SQL);
+harmonization uses **Lucene 9**; the UI is JSF / PrimeFaces 14 (Portuguese).
 
 ### Toolchain / runtime (already installed in the VM snapshot)
 - **Build & run on JDK 8** (`JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64`). This is
@@ -26,11 +26,12 @@ harmonization uses **Lucene 6**; the UI is JSF 2 + PrimeFaces 3.4.2 (Portuguese)
 - A copy of JBoss AS 7.1.1.Final is at `/opt/jboss/jboss-as-7.1.1.Final` for
   reference only; do not use it.
 
-### MongoDB 4.4 (required version)
-- The app bundles `mongo-java-driver-2.11.0`, which speaks the legacy wire protocol
-  removed in MongoDB 5.1+. Use **MongoDB 4.4** (installed). It listens on
-  `localhost:27017`, database `Periscope`, **no auth**. `new Mongo()` with defaults.
-- Start it (systemd is unavailable, run manually):
+### MongoDB (driver sync 5.x / Morphia 2)
+- The app uses `mongodb-driver-sync` 5.2.1 + Morphia 2.4.14. Connection via
+  `MONGODB_URI` (default `mongodb://localhost:27017`) and `MONGODB_DATABASE`
+  (default `Periscope`). No auth in the local snapshot.
+- Server: **MongoDB 4.4+** works for local smoke; modernization targets **7.x**.
+  Start it (systemd is unavailable, run manually):
   `mongod --dbpath /var/lib/mongodb --bind_ip 127.0.0.1 --port 27017 --logpath /var/log/mongodb/mongod.log --fork`
 
 ### Legacy Maven artifacts (vendored)

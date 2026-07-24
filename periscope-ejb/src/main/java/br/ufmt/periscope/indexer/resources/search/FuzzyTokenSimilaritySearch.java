@@ -84,6 +84,11 @@ public class FuzzyTokenSimilaritySearch {
         }
         
         IndexReader reader = resources.getReader();
+        if (reader == null) {
+            Logger.getLogger(FuzzyTokenSimilaritySearch.class.getName())
+                    .log(Level.WARNING, "Lucene IndexReader unavailable; returning no suggestions");
+            return new ArrayList<Document>();
+        }
         IndexSearcher buscador = new IndexSearcher(reader);
         
         List<Document> docs = new ArrayList();
@@ -91,11 +96,12 @@ public class FuzzyTokenSimilaritySearch {
             
             ScoreDoc[] resultados = buscador.search(bq.build(), top).scoreDocs;
             for (ScoreDoc resultado : resultados){
-                docs.add(buscador.doc(resultado.doc));
+                docs.add(buscador.storedFields().document(resultado.doc));
             }
             resources.closeReader(reader);
         } catch (IOException ex) {
             Logger.getLogger(FuzzyTokenSimilaritySearch.class.getName()).log(Level.SEVERE, null, ex);
+            resources.closeReader(reader);
         }
         
         

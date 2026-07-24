@@ -37,7 +37,8 @@ public class FastJoinTermEnum extends FilteredTermsEnum {
                 return AcceptStatus.NO;
             }
         } else {
-            return AcceptStatus.NO_AND_SEEK;
+            // Lucene 9: NO_AND_SEEK removed from typical migration paths; NO skips the term.
+            return AcceptStatus.NO;
         }
     }
     

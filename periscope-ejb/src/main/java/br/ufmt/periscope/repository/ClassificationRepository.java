@@ -1,6 +1,7 @@
 package br.ufmt.periscope.repository;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import jakarta.inject.Inject;
@@ -11,11 +12,9 @@ import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.report.Pair;
 import br.ufmt.periscope.util.Filters;
 
-import com.github.jmkgreen.morphia.Datastore;
-import com.mongodb.AggregationOutput;
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import com.mongodb.client.MongoCollection;
+import dev.morphia.Datastore;
+import org.bson.Document;
 
 @Named
 public class ClassificationRepository {
@@ -38,12 +37,11 @@ public class ClassificationRepository {
          * "applicationPerSector" : -1}} , { "$limit" : 8})
          *
          */
-        AggregationOutput output;
-        DBObject fields = null;
+        Document fields = null;
 
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
+        List<Document> pipeline = new ArrayList<Document>();
 
-        DBObject matchParameters = new BasicDBObject();
+        Document matchParameters = new Document();
 
         matchParameters.put("project.$id", currentProject.getId());
 
@@ -60,67 +58,60 @@ public class ClassificationRepository {
         }
 
         if (filtro.getSelecionaData() == 1) {
-            matchParameters.put("publicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim()));
+            matchParameters.put("publicationDate",
+                    new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()));
         } else {
-            matchParameters.put("applicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim()));
+            matchParameters.put("applicationDate",
+                    new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()));
         }
 
         matchParameters.put("blacklisted", false);
 
         if (classification == 2) {
-
-            matchParameters.put("mainCPCClassification", new BasicDBObject("$exists", true));
+            matchParameters.put("mainCPCClassification", new Document("$exists", true));
         } else {
-            matchParameters.put("mainClassification", new BasicDBObject("$exists", true));
+            matchParameters.put("mainClassification", new Document("$exists", true));
         }
+
+        pipeline.add(new Document("$match", matchParameters));
 
         if (!klass) {
             // classe nao esta selecionada
             // buscar secao
-            fields = getSection(parametros, classification);
+            fields = getSection(pipeline, classification);
             subKlass = false;
             group = false;
             subGroup = false;
         } else if (!subKlass) {
             // classe selecionada e subclasse nao esta
             // buscar classe
-            fields = getKlass(parametros, classification);
+            fields = getKlass(pipeline, classification);
             group = false;
             subGroup = false;
         } else if (!group) {
             // classe e subclasse selecionadas e grupo nao selecionado
             // buscar subclasse
-            fields = getSubKlass(parametros, classification);
+            fields = getSubKlass(pipeline, classification);
             subGroup = false;
         } else if (!subGroup) {
             // classe, subclasse e grupo selecionado, subgrupo nao selecioando
             // buscar grupo
-            fields = getGroup(parametros, classification);
+            fields = getGroup(pipeline, classification);
         } else {
             // tudo selecionado
             // buscar subgrupo
-            fields = getSubGroup(parametros, classification);
+            fields = getSubGroup(pipeline, classification);
         }
 
-        DBObject groupDb = new BasicDBObject("$group", fields);
-        parametros.add(groupDb);
-        DBObject sort = new BasicDBObject("$sort", new BasicDBObject(
-                "applicationPerSector", -1));
-        parametros.add(sort);
-        DBObject limit2 = new BasicDBObject("$limit", limit);
-        parametros.add(limit2);
+        pipeline.add(new Document("$group", fields));
+        pipeline.add(new Document("$sort", new Document("applicationPerSector", -1)));
+        pipeline.add(new Document("$limit", limit));
 
-        DBObject[] parameters = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
+        MongoCollection<Document> coll = ds.getDatabase()
+                .getCollection(ds.getMapper().getEntityModel(Patent.class).getCollectionName());
 
-        DBObject match = new BasicDBObject();
-        match.put("$match", matchParameters);
-
-        output = ds.getCollection(Patent.class).aggregate(match, parameters);
-        System.out.println("Comando Principais Classificações: " + output.getCommand());
-        BasicDBList outputResult = (BasicDBList) output.getCommandResult().get(
-                "result");
-//        System.out.println("Comando:" + output.getCommand().toString());
+        System.out.println("Comando Principais Classificações: " + pipeline);
+        List<Document> outputResult = coll.aggregate(pipeline).into(new ArrayList<Document>());
 
 //        db.Patent.aggregate({"$unwind" : "$applicants"},{"$match" : {"applicants.name":"PROCTER & GAMBLE"}},
 //        { "$match" : { "blacklisted" : false}} , { "$match" : { "mainClassification" : { "$exists" : true}}} , 
@@ -128,17 +119,15 @@ public class ClassificationRepository {
 //        { "$group" : { "_id" : "$section" , "applicationPerSector" : { "$sum" : 1}}} , { "$sort" : { "applicationPerSector" : -1}} ,
 //        { "$limit" : 8})
         List<Pair> pairs = new ArrayList<Pair>();
-        for (Object object : outputResult) {
-            DBObject aux = (DBObject) object;
+        for (Document aux : outputResult) {
             String ipc = aux.get("_id").toString();
-            Integer count = (Integer) aux.get("applicationPerSector");
-
+            Number count = (Number) aux.get("applicationPerSector");
             pairs.add(new Pair(ipc, count));
         }
         return pairs;
     }
 
-    private DBObject getSection(ArrayList<DBObject> parametros, int classification) {
+    private Document getSection(List<Document> pipeline, int classification) {
         /**
          * db.Patent.aggregate( {$match:{"project.$id":new
          * ObjectId("51db042d44ae70d2d3649c20")}},
@@ -150,34 +139,24 @@ public class ClassificationRepository {
          */
         // repete para todos
         if (classification == 2) {
+            List<Object> list = Arrays.<Object>asList("$mainCPCClassification.value", 0, 1);
+            Document section = new Document("section", new Document("$substr", list));
+            pipeline.add(new Document("$project", section));
 
-            Object[] list = new Object[]{"$mainCPCClassification.value", 0, 1};
-            DBObject section = new BasicDBObject("section", new BasicDBObject(
-                    "$substr", list));
-
-            DBObject project = new BasicDBObject("$project", section);
-            parametros.add(project);
-
-            DBObject fields = new BasicDBObject("_id", "$section");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-            return fields;
+            return new Document("_id", "$section")
+                    .append("applicationPerSector", new Document("$sum", 1));
         } else {
-            Object[] list = new Object[]{"$mainClassification.value", 0, 1};
-            DBObject section = new BasicDBObject("section", new BasicDBObject(
-                    "$substr", list));
+            List<Object> list = Arrays.<Object>asList("$mainClassification.value", 0, 1);
+            Document section = new Document("section", new Document("$substr", list));
+            pipeline.add(new Document("$project", section));
 
-            DBObject project = new BasicDBObject("$project", section);
-            parametros.add(project);
-
-            DBObject fields = new BasicDBObject("_id", "$section");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-            return fields;
-
+            return new Document("_id", "$section")
+                    .append("applicationPerSector", new Document("$sum", 1));
         }
 
     }
 
-    private DBObject getKlass(ArrayList<DBObject> parametros, int classification) {
+    private Document getKlass(List<Document> pipeline, int classification) {
         /**
          * db.Patent.aggregate( {$match:{"project.$id":new
          * ObjectId("51db042d44ae70d2d3649c20")}},
@@ -189,32 +168,23 @@ public class ClassificationRepository {
          */
 
         if (classification == 2) {
+            List<Object> list = Arrays.<Object>asList("$mainCPCClassification.klass", 0, 3);
+            Document section = new Document("section", new Document("$substr", list));
+            pipeline.add(new Document("$project", section));
 
-            Object[] list = new Object[]{"$mainCPCClassification.klass", 0, 3};
-            DBObject section = new BasicDBObject("section", new BasicDBObject(
-                    "$substr", list));
-
-            DBObject project = new BasicDBObject("$project", section);
-            parametros.add(project);
-            DBObject fields = new BasicDBObject("_id", "$section");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-
-            return fields;
+            return new Document("_id", "$section")
+                    .append("applicationPerSector", new Document("$sum", 1));
         } else {
-            Object[] list = new Object[]{"$mainClassification.klass", 0, 3};
-            DBObject section = new BasicDBObject("section", new BasicDBObject(
-                    "$substr", list));
+            List<Object> list = Arrays.<Object>asList("$mainClassification.klass", 0, 3);
+            Document section = new Document("section", new Document("$substr", list));
+            pipeline.add(new Document("$project", section));
 
-            DBObject project = new BasicDBObject("$project", section);
-            parametros.add(project);
-            DBObject fields = new BasicDBObject("_id", "$section");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-
-            return fields;
+            return new Document("_id", "$section")
+                    .append("applicationPerSector", new Document("$sum", 1));
         }
     }
 
-    private DBObject getSubKlass(ArrayList<DBObject> parametros, int classification) {
+    private Document getSubKlass(List<Document> pipeline, int classification) {
         /**
          * db.Patent.aggregate( {$match:{"project.$id":new
          * ObjectId("51db042d44ae70d2d3649c20")}},
@@ -226,21 +196,16 @@ public class ClassificationRepository {
          */
 
         if (classification == 2) {
-
-            DBObject fields = new BasicDBObject("_id", "$mainCPCClassification.klass");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-
-            return fields;
+            return new Document("_id", "$mainCPCClassification.klass")
+                    .append("applicationPerSector", new Document("$sum", 1));
         } else {
-            DBObject fields = new BasicDBObject("_id", "$mainClassification.klass");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-
-            return fields;
+            return new Document("_id", "$mainClassification.klass")
+                    .append("applicationPerSector", new Document("$sum", 1));
         }
 
     }
 
-    private DBObject getGroup(ArrayList<DBObject> parametros, int classification) {
+    private Document getGroup(List<Document> pipeline, int classification) {
         /**
          * db.Patent.aggregate( {$match:{"project.$id":new
          * ObjectId("51db042d44ae70d2d3649c20")}},
@@ -253,33 +218,26 @@ public class ClassificationRepository {
          */
 
         if (classification == 2) {
+            List<Object> list = Arrays.<Object>asList("$mainCPCClassification.klass",
+                    "$mainCPCClassification.group");
+            Document section = new Document("group", new Document("$concat", list));
+            pipeline.add(new Document("$project", section));
 
-            Object[] list = {"$mainCPCClassification.klass",
-                "$mainCPCClassification.group"};
-            DBObject section = new BasicDBObject("group", new BasicDBObject(
-                    "$concat", list));
-            DBObject project = new BasicDBObject("$project", section);
-            parametros.add(project);
-
-            DBObject fields = new BasicDBObject("_id", "$group");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-            return fields;
+            return new Document("_id", "$group")
+                    .append("applicationPerSector", new Document("$sum", 1));
         } else {
-            Object[] list = {"$mainClassification.klass",
-                "$mainClassification.group"};
-            DBObject section = new BasicDBObject("group", new BasicDBObject(
-                    "$concat", list));
-            DBObject project = new BasicDBObject("$project", section);
-            parametros.add(project);
+            List<Object> list = Arrays.<Object>asList("$mainClassification.klass",
+                    "$mainClassification.group");
+            Document section = new Document("group", new Document("$concat", list));
+            pipeline.add(new Document("$project", section));
 
-            DBObject fields = new BasicDBObject("_id", "$group");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-            return fields;
+            return new Document("_id", "$group")
+                    .append("applicationPerSector", new Document("$sum", 1));
         }
 
     }
 
-    private DBObject getSubGroup(ArrayList<DBObject> parametros, int classification) {
+    private Document getSubGroup(List<Document> pipeline, int classification) {
 
         /**
          * db.Patent.aggregate( {$match:{"project.$id":new
@@ -292,30 +250,23 @@ public class ClassificationRepository {
          * {$sort:{applicationPerSector:-1}} );
          */
         if (classification == 2) {
+            List<Object> list = Arrays.<Object>asList("$mainCPCClassification.klass",
+                    "$mainCPCClassification.group", "/",
+                    "$mainCPCClassification.subgroup");
+            Document section = new Document("group", new Document("$concat", list));
+            pipeline.add(new Document("$project", section));
 
-            Object[] list = {"$mainCPCClassification.klass",
-                "$mainCPCClassification.group", "/",
-                "$mainCPCClassification.subgroup"};
-            DBObject section = new BasicDBObject("group", new BasicDBObject(
-                    "$concat", list));
-            DBObject project = new BasicDBObject("$project", section);
-            parametros.add(project);
-
-            DBObject fields = new BasicDBObject("_id", "$group");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-            return fields;
+            return new Document("_id", "$group")
+                    .append("applicationPerSector", new Document("$sum", 1));
         } else {
-            Object[] list = {"$mainClassification.klass",
-                "$mainClassification.group", "/",
-                "$mainClassification.subgroup"};
-            DBObject section = new BasicDBObject("group", new BasicDBObject(
-                    "$concat", list));
-            DBObject project = new BasicDBObject("$project", section);
-            parametros.add(project);
+            List<Object> list = Arrays.<Object>asList("$mainClassification.klass",
+                    "$mainClassification.group", "/",
+                    "$mainClassification.subgroup");
+            Document section = new Document("group", new Document("$concat", list));
+            pipeline.add(new Document("$project", section));
 
-            DBObject fields = new BasicDBObject("_id", "$group");
-            fields.put("applicationPerSector", new BasicDBObject("$sum", 1));
-            return fields;
+            return new Document("_id", "$group")
+                    .append("applicationPerSector", new Document("$sum", 1));
         }
 
     }

@@ -15,7 +15,7 @@ import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
  * @author horgun
  *
  */
-public class DataSignaturesTokenFilter extends TokenFilter {
+public final class DataSignaturesTokenFilter extends TokenFilter {
     
     public class Signature {
         private String value;
@@ -66,6 +66,8 @@ public class DataSignaturesTokenFilter extends TokenFilter {
     private int tokenNumber = 0;
     private boolean consumed = false;
     private String tokenSet = "";
+    /** Monotonic offset cursor required by Lucene 9+ IndexWriter. */
+    private int nextOffset = 0;
     /**
      * The default constructor of TokenFilter
      * @param input the input TokenStream
@@ -186,10 +188,11 @@ public class DataSignaturesTokenFilter extends TokenFilter {
         if (consumed && !signatures.isEmpty()){
             Signature s = signatures.remove(0);
             termAtt.setEmpty();
-            String tokenSetTokens[] = tokenSet.split(" ");
-            int start = tokenSet.indexOf(tokenSetTokens[s.getTid()-1]);
-            int end = start + tokenSetTokens[s.getTid()-1].length()-1;
-//            System.out.println("Start: " + start + "; end: " + end + ";");
+            // Signatures are emitted in reverse-sorted order, so original
+            // character offsets are non-monotonic; Lucene 9 rejects that.
+            int start = nextOffset;
+            int end = start + Math.max(1, s.getValue().length());
+            nextOffset = end;
             offsetAtt.setOffset(start, end);
             termAtt.append(s.getValue());
             return true;
@@ -200,6 +203,7 @@ public class DataSignaturesTokenFilter extends TokenFilter {
         consumed = false;
         tokenNumber = 0;
         tokenSet = "";
+        nextOffset = 0;
         return false;
     }
 
@@ -211,6 +215,7 @@ public class DataSignaturesTokenFilter extends TokenFilter {
         consumed = false;
         tokenNumber = 0;
         tokenSet = "";
+        nextOffset = 0;
     }
 
     

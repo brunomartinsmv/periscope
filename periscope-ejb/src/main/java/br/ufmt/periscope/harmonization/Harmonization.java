@@ -3,14 +3,15 @@ package br.ufmt.periscope.harmonization;
 import br.ufmt.periscope.indexer.PatentIndexer;
 import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.model.Rule;
-import com.github.jmkgreen.morphia.Datastore;
-import com.github.jmkgreen.morphia.mapping.Mapper;
-import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DBObject;
-import java.util.ArrayList;
+import dev.morphia.Datastore;
+import dev.morphia.UpdateOptions;
+import dev.morphia.query.updates.UpdateOperators;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import java.util.ArrayList;
 import org.bson.types.ObjectId;
+
+import static dev.morphia.query.filters.Filters.eq;
 
 @Named
 /**
@@ -18,7 +19,7 @@ import org.bson.types.ObjectId;
  * para aplicante.
  */
 public class Harmonization {
-    
+
     private @Inject
     Datastore ds;
     private @Inject
@@ -47,75 +48,52 @@ public class Harmonization {
 
     /**
      * Aplica a regra para aplicante
-     * @param rule 
+     * @param rule
      */
     private void applyApplicantRule(Rule rule) {
         ObjectId projectId = rule.getProject().getId();
-        Mapper mapper = ds.getMapper();
-        rule.getCountry().setStates(null);
-        DBObject dbObjectCountry = mapper.toDBObject(rule.getCountry());
-        DBObject dbObjectState = mapper.toDBObject(rule.getState());
-        DBObject dbObjectNature = mapper.toDBObject(rule.getNature());
-        String applicants[] = new String[rule.getSubstitutions().size()];
-        applicants = rule.getSubstitutions().toArray(applicants);
-        for (String applicant : applicants) {
-            DBObject query = BasicDBObjectBuilder
-                    .start("project.$id", projectId).add("applicants.name", applicant).get();
-            DBObject updateOp = BasicDBObjectBuilder
-                    .start("$set",
-                            BasicDBObjectBuilder
-                            .start("applicants.$.name", rule.getName())
-                            .add("applicants.$.harmonized", true)
-                            .add("applicants.$.acronym", rule.getAcronym())
-                            .add("applicants.$.nature", dbObjectNature)
-                            .add("applicants.$.country", dbObjectCountry)
-                            .add("applicants.$.state", dbObjectState)
-                            .get())
-                    .get();
-            ds.getCollection(Patent.class)
-                    .updateMulti(query, updateOp);
+        if (rule.getCountry() != null) {
+            rule.getCountry().setStates(null);
         }
-//        ini = System.currentTimeMillis();
-        indexer.indexRule(new ArrayList<String>(rule.getSubstitutions()), rule.getName(), null, null, rule.getProject());
-//        System.out.println("Tempo indexar "+(System.currentTimeMillis() - ini));
-
+        String[] applicants = rule.getSubstitutions().toArray(new String[0]);
+        for (String applicant : applicants) {
+            ds.find(Patent.class)
+                    .filter(eq("project.$id", projectId), eq("applicants.name", applicant))
+                    .update(new UpdateOptions().multi(true),
+                            UpdateOperators.set("applicants.$.name", rule.getName()),
+                            UpdateOperators.set("applicants.$.harmonized", true),
+                            UpdateOperators.set("applicants.$.acronym", rule.getAcronym()),
+                            UpdateOperators.set("applicants.$.nature", rule.getNature()),
+                            UpdateOperators.set("applicants.$.country", rule.getCountry()),
+                            UpdateOperators.set("applicants.$.state", rule.getState()));
+        }
+        indexer.indexRule(new ArrayList<String>(rule.getSubstitutions()), rule.getName(),
+                null, null, rule.getProject());
     }
 
     /**
      * Aplica a regra para inventores
-     * @param rule 
+     * @param rule
      */
     private void applyInventorRule(Rule rule) {
         ObjectId projectId = rule.getProject().getId();
-        Mapper mapper = ds.getMapper();
-        rule.getCountry().setStates(null);
-        DBObject dbObjectCountry = mapper.toDBObject(rule.getCountry());
-        DBObject dbObjectState = mapper.toDBObject(rule.getState());
-        DBObject dbObjectNature = mapper.toDBObject(rule.getNature());
-        String inventors[] = new String[rule.getSubstitutions().size()];
-        inventors = rule.getSubstitutions().toArray(inventors);
+        if (rule.getCountry() != null) {
+            rule.getCountry().setStates(null);
+        }
+        String[] inventors = rule.getSubstitutions().toArray(new String[0]);
         for (String inventor : inventors) {
-            DBObject query = BasicDBObjectBuilder
-                    .start("project.$id", projectId)
-                    .add("inventors.name", inventor)
-                    .get();
-            DBObject updateOp = BasicDBObjectBuilder
-                    .start("$set",
-                            BasicDBObjectBuilder
-                            .start("inventors.$.name", rule.getName())
-                            .add("inventors.$.harmonized", true)
-                            .add("inventors.$.country", dbObjectCountry)
-                            .add("inventors.$.state", dbObjectState)
-                            .add("inventors.$.nature", dbObjectNature)
-                            .add("inventors.$.acronym", rule.getAcronym())
-                            .get())
-                    .get();
-
-            ds.getCollection(Patent.class)
-                    .updateMulti(query, updateOp);
+            ds.find(Patent.class)
+                    .filter(eq("project.$id", projectId), eq("inventors.name", inventor))
+                    .update(new UpdateOptions().multi(true),
+                            UpdateOperators.set("inventors.$.name", rule.getName()),
+                            UpdateOperators.set("inventors.$.harmonized", true),
+                            UpdateOperators.set("inventors.$.country", rule.getCountry()),
+                            UpdateOperators.set("inventors.$.state", rule.getState()),
+                            UpdateOperators.set("inventors.$.nature", rule.getNature()),
+                            UpdateOperators.set("inventors.$.acronym", rule.getAcronym()));
         }
 
-        indexer.indexRule(null, null, new ArrayList<String>(rule.getSubstitutions()), rule.getName(), rule.getProject());
-
+        indexer.indexRule(null, null, new ArrayList<String>(rule.getSubstitutions()),
+                rule.getName(), rule.getProject());
     }
 }

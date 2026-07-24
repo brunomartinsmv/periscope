@@ -27,8 +27,12 @@
             <version>33.3.1-jre</version>
         </dependency>
         <dependency>
-            <groupId>com.github.jmkgreen.morphia</groupId>
-            <artifactId>morphia</artifactId>
+            <groupId>dev.morphia.morphia</groupId>
+            <artifactId>morphia-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
         </dependency>
         <!-- ChartSeries shims; UI charts still need PF types only in web.
              Keep classifier jakarta temporarily for any leftover PF refs. -->
@@ -53,7 +57,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
+            <artifactId>lucene-analysis-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -68,12 +72,8 @@
             <artifactId>poi</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>fontbox</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>jempbox</artifactId>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.pdfbox</groupId>

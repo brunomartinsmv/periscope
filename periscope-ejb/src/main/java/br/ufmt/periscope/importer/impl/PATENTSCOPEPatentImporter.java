@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 
 public class PATENTSCOPEPatentImporter implements PatentImporter {
@@ -85,7 +86,7 @@ public class PATENTSCOPEPatentImporter implements PatentImporter {
 
             switch (cell.getCellType()) {
 
-                case Cell.CELL_TYPE_STRING:
+                case CellType.STRING:
                     fillPatent(cell.getColumnIndex(), cell.getStringCellValue());
                     break;
                 default:

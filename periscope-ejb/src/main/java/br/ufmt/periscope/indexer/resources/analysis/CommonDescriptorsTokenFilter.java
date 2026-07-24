@@ -14,7 +14,7 @@ import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
  *
  * @author mattyws
  */
-public class CommonDescriptorsTokenFilter extends TokenFilter {
+public final class CommonDescriptorsTokenFilter extends TokenFilter {
 
     // The attribute to manupulate the token as a string
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
@@ -44,7 +44,7 @@ public class CommonDescriptorsTokenFilter extends TokenFilter {
     }
 
     @Override
-    public boolean incrementToken() throws IOException {
+    public final boolean incrementToken() throws IOException {
         // If we not consumed all tokens, then cosume it!
         while (!consumed) {
             consumed = true;

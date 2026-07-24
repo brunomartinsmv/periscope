@@ -1,19 +1,19 @@
 package br.ufmt.periscope.repository;
 
+import java.util.Collections;
 import java.util.List;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 import br.ufmt.periscope.model.ApplicantType;
 
-import com.github.jmkgreen.morphia.Datastore;
-import com.mongodb.BasicDBObject;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import jakarta.annotation.PostConstruct;
-import jakarta.faces.context.FacesContext;
+import dev.morphia.Datastore;
+import dev.morphia.query.FindOptions;
+import dev.morphia.query.Sort;
+
+import static dev.morphia.query.filters.Filters.eq;
 
 @Named
 public class ApplicantTypeRepository {
@@ -29,8 +29,9 @@ public class ApplicantTypeRepository {
     }
 
     public void createIfNotExists(ApplicantType type) {
-        BasicDBObject where = new BasicDBObject("name", type.getName());
-        int count = ds.getCollection(ApplicantType.class).find(where).count();
+        long count = ds.find(ApplicantType.class)
+                .filter(eq("name", type.getName()))
+                .count();
 
         if (count >= 0) {
             return;
@@ -40,7 +41,9 @@ public class ApplicantTypeRepository {
     }
 
     public List<ApplicantType> getAll() {
-        List<ApplicantType> ret = ds.createQuery(ApplicantType.class).order("name").asList();
+        List<ApplicantType> ret = ds.find(ApplicantType.class)
+                .iterator(new FindOptions().sort(Sort.ascending("name")))
+                .toList();
         Collections.sort(ret);
         return ret;
     }

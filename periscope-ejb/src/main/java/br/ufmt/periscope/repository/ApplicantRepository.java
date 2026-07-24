@@ -1,7 +1,5 @@
 package br.ufmt.periscope.repository;
 
-import br.ufmt.periscope.indexer.LuceneIndexerResources;
-import br.ufmt.periscope.indexer.resources.analysis.FastJoinAnalyzer;
 import br.ufmt.periscope.indexer.resources.search.FuzzyTokenSimilaritySearch;
 import br.ufmt.periscope.model.Applicant;
 import br.ufmt.periscope.model.ApplicantType;
@@ -10,30 +8,27 @@ import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.State;
 import br.ufmt.periscope.util.Filters;
-import com.github.jmkgreen.morphia.Datastore;
-import com.github.jmkgreen.morphia.mapping.Mapper;
-import com.github.jmkgreen.morphia.mapping.cache.EntityCache;
 import com.google.common.collect.HashMultiset;
-import com.mongodb.AggregationOutput;
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-import com.mongodb.MapReduceCommand;
-import com.mongodb.MapReduceCommand.OutputType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Projections;
+import dev.morphia.Datastore;
+import dev.morphia.query.FindOptions;
+import dev.morphia.query.Sort;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.apache.lucene.document.Document;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 /**
  * This class have the methods with the queries for Applicant
@@ -52,6 +47,10 @@ public class ApplicantRepository {
     private @Inject
     FuzzyTokenSimilaritySearch fs;
 
+    private MongoCollection<Document> patentDocs() {
+        return ds.getCollection(Patent.class).withDocumentClass(Document.class);
+    }
+
     /**
      * Method that query an applicant by its name.
      *
@@ -59,28 +58,23 @@ public class ApplicantRepository {
      * @return Applicant
      */
     public Applicant getApplicantByName(String name) {
-
-        Applicant ret = null;
-        BasicDBObject eleMatch = new BasicDBObject("$elemMatch", new BasicDBObject("name", name));
-        BasicDBObject applicants = new BasicDBObject("applicants", eleMatch);
-        BasicDBObject keys = new BasicDBObject("applicants", 1);
-        DBCursor cursor = ds.getCollection(Patent.class).find(applicants, keys);
-        int docCount = ds.getCollection(Patent.class).find(applicants, keys).count();
-        if (cursor.hasNext()) {
-            Mapper mapper = ds.getMapper();
-            EntityCache ec = mapper.createEntityCache();
-
-            BasicDBList objList = (BasicDBList) cursor.next().get("applicants");
-            for (Object obj : objList) {
-                ret = (Applicant) mapper.fromDBObject(Applicant.class, (DBObject) obj, ec);
-                if (ret.getName().equals(name)) {
-                    ret.setDocumentCount(docCount);
-                    return ret;
+        long docCount = ds.find(Patent.class)
+                .filter(dev.morphia.query.filters.Filters.elemMatch("applicants",
+                        dev.morphia.query.filters.Filters.eq("name", name)))
+                .count();
+        Patent patent = ds.find(Patent.class)
+                .filter(dev.morphia.query.filters.Filters.elemMatch("applicants",
+                        dev.morphia.query.filters.Filters.eq("name", name)))
+                .first();
+        if (patent != null && patent.getApplicants() != null) {
+            for (Applicant applicant : patent.getApplicants()) {
+                if (applicant.getName() != null && applicant.getName().equals(name)) {
+                    applicant.setDocumentCount((int) docCount);
+                    return applicant;
                 }
             }
         }
         return null;
-
     }
 
     /**
@@ -91,30 +85,27 @@ public class ApplicantRepository {
      */
     public List<Applicant> getApplicants(Project project) {
         Map<String, Applicant> map = new HashMap<String, Applicant>();
-
         HashMultiset<String> bag = HashMultiset.create();
 
-        BasicDBObject where = new BasicDBObject();
-        where.put("project.$id", project.getId());
-        where.put("applicants", new BasicDBObject("$exists", true));
+        FindOptions options = new FindOptions();
+        options.projection().include("applicants");
+        options.sort(Sort.ascending("applicants.name"));
 
-        BasicDBObject keys = new BasicDBObject();
-        keys.put("applicants", 1);
+        List<Patent> patents = ds.find(Patent.class)
+                .filter(dev.morphia.query.filters.Filters.eq("project", project),
+                        dev.morphia.query.filters.Filters.exists("applicants"))
+                .iterator(options)
+                .toList();
 
-        DBCursor cursor = ds.getCollection(Patent.class).find(where, keys).sort(new BasicDBObject("applicants.name", 1));
-        Mapper mapper = ds.getMapper();
-        EntityCache ec = mapper.createEntityCache();
-        while (cursor.hasNext()) {
-
-            BasicDBList objList = (BasicDBList) cursor.next().get("applicants");
-            Iterator<Object> itList = objList.iterator();
-            while (itList.hasNext()) {
-                Applicant pa = (Applicant) mapper.fromDBObject(Applicant.class, (DBObject) itList.next(), ec);
+        for (Patent patent : patents) {
+            if (patent.getApplicants() == null) {
+                continue;
+            }
+            for (Applicant pa : patent.getApplicants()) {
                 bag.add(pa.getName());
                 pa.setDocumentCount(bag.count(pa.getName()));
                 map.put(pa.getName(), pa);
             }
-
         }
         List<Applicant> ret = new ArrayList<Applicant>(map.values());
         Collections.sort(ret);
@@ -129,75 +120,61 @@ public class ApplicantRepository {
      * @return List&lt;String&gt; - List with the applicants queried.
      */
     public List<String> getApplicants(Project project, String begins) {
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
-        DBObject matchProject = new BasicDBObject("$match", new BasicDBObject("project.$id", project.getId()).append("blacklisted", false));
-        DBObject unwind = new BasicDBObject("$unwind", "$applicants");
-        parametros.add(unwind);
-        DBObject matchName = new BasicDBObject("$match", new BasicDBObject("applicants.name", new BasicDBObject("$regex", "^" + begins).append("$options", "i")));
-        parametros.add(matchName);
-        DBObject projection = new BasicDBObject("$project", new BasicDBObject("applicants", 1));
-        parametros.add(projection);
-        DBObject group = new BasicDBObject("$group", new BasicDBObject("_id", "$applicants.name"));
-        parametros.add(group);
-        DBObject parameters[] = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(matchProject, parameters);
-        BasicDBList outputList = (BasicDBList) output.getCommandResult().get("result");
+        List<Bson> pipeline = new ArrayList<Bson>();
+        pipeline.add(Aggregates.match(com.mongodb.client.model.Filters.and(
+                com.mongodb.client.model.Filters.eq("project.$id", project.getId()),
+                com.mongodb.client.model.Filters.eq("blacklisted", false))));
+        pipeline.add(Aggregates.unwind("$applicants"));
+        pipeline.add(Aggregates.match(com.mongodb.client.model.Filters.regex(
+                "applicants.name", "^" + begins, "i")));
+        pipeline.add(Aggregates.project(Projections.include("applicants")));
+        pipeline.add(Aggregates.group("$applicants.name"));
+
+        List<Document> output = patentDocs().aggregate(pipeline).into(new ArrayList<Document>());
         List<String> lista = new ArrayList<String>();
-        for (Object applicant : outputList) {
-            DBObject aux = (DBObject) applicant;
-            String nome = aux.get("_id").toString();
-            lista.add(nome);
+        for (Document applicant : output) {
+            Object id = applicant.get("_id");
+            if (id != null) {
+                lista.add(id.toString());
+            }
         }
         return lista;
-
     }
 
     /**
-     * Method responsible to update the mainApplicant collection with MapReduce.
+     * Method responsible to update the mainApplicant collection with an
+     * aggregation pipeline (replaces legacy MapReduce).
+     *
+     * Produces documents {@code {_id: applicantName, value: count}} consumed by
+     * {@code MainApplicantReport}.
      *
      * @param currentProject Project - Current Project.
      * @param filtro Filters - filters to be applied in the query.
      */
     public void updateMainApplicants(Project currentProject, Filters filtro) {
-
-        String map = "function() { "
-                + "for(var i in this.applicants){ "
-                + "emit(this.applicants[i].name,1); "
-                + "}"
-                + "}";
-        String reduce = "function(name,values) { "
-                + "total=0;"
-                + "for(var i in values){ "
-                + "total+=values[i]; "
-                + "}"
-                + "return total;"
-                + "}";
-        BasicDBObject where = new BasicDBObject();
-        where.put("project.$id", currentProject.getId());
-        where.put("applicants", new BasicDBObject("$exists", true));
+        Document match = new Document("project.$id", currentProject.getId())
+                .append("applicants", new Document("$exists", true));
         if (filtro.isComplete()) {
-            where.put("completed", filtro.isComplete());
+            match.append("completed", filtro.isComplete());
         }
         if (filtro.getSelecionaData() == 1) {
-            where.put("publicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim()));
+            match.append("publicationDate",
+                    new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()));
         } else {
-            where.put("applicationDate", new BasicDBObject("$gte", filtro.getInicio()).append("$lte", filtro.getFim()));
+            match.append("applicationDate",
+                    new Document("$gte", filtro.getInicio()).append("$lte", filtro.getFim()));
         }
         if (filtro.getApplicantType() != null && !filtro.getApplicantType().isEmpty()) {
-            where.put("applicants.nature.name", filtro.getApplicantType());
-
+            match.append("applicants.nature.name", filtro.getApplicantType());
         }
 
-        DBCollection coll = ds.getCollection(Patent.class);
-        MapReduceCommand cmd = new MapReduceCommand(coll,
-                map,
-                reduce,
-                "mainApplicant",
-                OutputType.REPLACE,
-                where);
-        coll.mapReduce(cmd);
+        List<Bson> pipeline = Arrays.<Bson>asList(
+                Aggregates.match(match),
+                Aggregates.unwind("$applicants"),
+                Aggregates.group("$applicants.name", Accumulators.sum("value", 1.0)),
+                Aggregates.out("mainApplicant"));
 
+        patentDocs().aggregate(pipeline).toCollection();
     }
 
     /**
@@ -213,16 +190,16 @@ public class ApplicantRepository {
      */
     public Set<String> getApplicantSugestions(Project project, int top, String... names) {
         Set<String> results = new HashSet<String>();
-        
-        
-        for (String name : names) {
-            List<Document> docs = fs.search("applicant", project.getId().toString(), name, top);
-            for (Document doc : docs)
-                results.add(doc.get("applicant"));
-        }
-        
-        return results;
 
+        for (String name : names) {
+            List<org.apache.lucene.document.Document> docs =
+                    fs.search("applicant", project.getId().toString(), name, top);
+            for (org.apache.lucene.document.Document doc : docs) {
+                results.add(doc.get("applicant"));
+            }
+        }
+
+        return results;
     }
 
     /**
@@ -240,119 +217,102 @@ public class ApplicantRepository {
      * @return List&lt;Applicant&gt; - List of the applicants to be put in the
      * table.
      */
-    public List<Applicant> load(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters, List<Applicant> list) {
+    public List<Applicant> load(int first, int pageSize, String sortField, int sortOrder,
+            Map<String, String> filters, List<Applicant> list) {
 
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
-        ArrayList<DBObject> parametrosGroup = new ArrayList<DBObject>();
+        Document matchProj = new Document("project.$id", currentProject.getId())
+                .append("blacklisted", false);
 
-        DBObject match = new BasicDBObject();
+        List<Bson> parametros = new ArrayList<Bson>();
+        List<Bson> parametrosGroup = new ArrayList<Bson>();
 
-        DBObject matchProj = new BasicDBObject();
-        matchProj.put("project.$id", currentProject.getId());
-        matchProj.put("blacklisted", false);
+        parametros.add(Aggregates.unwind("$applicants"));
+        parametrosGroup.add(Aggregates.unwind("$applicants"));
 
-        DBObject unwind = new BasicDBObject("$unwind", "$applicants");
-        parametros.add(unwind);
-        parametrosGroup.add(unwind);
-
-        if (!filters.entrySet().isEmpty()) {
-            DBObject matchFilterItem = new BasicDBObject();
+        if (filters != null && !filters.entrySet().isEmpty()) {
+            Document matchFilterItem = new Document();
             for (Map.Entry<String, String> entry : filters.entrySet()) {
                 String column = entry.getKey();
                 String value = entry.getValue();
-                DBObject regex;
+                Document regexDoc;
                 if (searchType != null && searchType.equals(1)) {
-                    regex = new BasicDBObject("$regex", "^" + value).append("$options", "i");
+                    regexDoc = new Document("$regex", "^" + value).append("$options", "i");
                 } else {
-                    regex = new BasicDBObject("$regex", value).append("$options", "i");
+                    regexDoc = new Document("$regex", value).append("$options", "i");
                 }
-                matchFilterItem.put("applicants." + column, regex);
+                matchFilterItem.put("applicants." + column, regexDoc);
             }
-            DBObject matchSearch = new BasicDBObject("$match", matchFilterItem);
+            Bson matchSearch = Aggregates.match(matchFilterItem);
             parametros.add(matchSearch);
             parametrosGroup.add(matchSearch);
         }
 
-        DBObject matchFilter = null;
         if (list != null && !list.isEmpty()) {
-            matchFilter = new BasicDBObject();
-            BasicDBList lista = new BasicDBList();
-            List<String> t = new ArrayList<String>();
+            List<String> names = new ArrayList<String>();
             for (Applicant ap : list) {
-                t.add(ap.getName());
+                names.add(ap.getName());
             }
-            lista.addAll(t);
-            matchFilter.put("applicants.name", new BasicDBObject("$nin", lista));
-
-            DBObject matchEdit = new BasicDBObject("$match", matchFilter);
+            Document matchFilter = new Document("applicants.name",
+                    new Document("$nin", names));
+            Bson matchEdit = Aggregates.match(matchFilter);
             parametros.add(matchEdit);
             parametrosGroup.add(matchEdit);
         }
 
-        DBObject idData = new BasicDBObject("name", "$applicants.name");
-        idData.put("country", "$applicants.country");
-        idData.put("state", "$applicants.state");
-        idData.put("acronym", "$applicants.acronym");
-        idData.put("nature", "$applicants.nature");
-        idData.put("harmonized", "$applicants.harmonized");
-        DBObject fields = new BasicDBObject("_id", idData);
-        fields.put("documentCount", new BasicDBObject("$sum", 1));
-        DBObject group = new BasicDBObject();
-        group.put("$group", fields);
+        Document idData = new Document("name", "$applicants.name")
+                .append("country", "$applicants.country")
+                .append("state", "$applicants.state")
+                .append("acronym", "$applicants.acronym")
+                .append("nature", "$applicants.nature")
+                .append("harmonized", "$applicants.harmonized");
+        Document groupFields = new Document("_id", idData)
+                .append("documentCount", new Document("$sum", 1));
+        Bson group = new Document("$group", groupFields);
         parametros.add(group);
         parametrosGroup.add(group);
 
-        fields = new BasicDBObject("_id", "nome");
-        fields.put("documentCount", new BasicDBObject("$sum", 1));
-        DBObject groupTotal = new BasicDBObject();
-        groupTotal.put("$group", fields);
-        parametrosGroup.add(groupTotal);
+        Document groupTotalFields = new Document("_id", "nome")
+                .append("documentCount", new Document("$sum", 1));
+        parametrosGroup.add(new Document("$group", groupTotalFields));
 
         if (sortField != null) {
             if ("documentCount".equals(sortField)) {
-                DBObject sort = new BasicDBObject("$sort", new BasicDBObject(sortField, (sortOrder == 0 ? 1 : -1)));
-                parametros.add(sort);
+                parametros.add(Aggregates.sort(new Document(sortField, sortOrder == 0 ? 1 : -1)));
             } else {
-                DBObject sort = new BasicDBObject("$sort", new BasicDBObject("_id." + sortField, (sortOrder == 0 ? 1 : -1)));
-                parametros.add(sort);
+                parametros.add(Aggregates.sort(
+                        new Document("_id." + sortField, sortOrder == 0 ? 1 : -1)));
             }
         } else {
-            DBObject sort = new BasicDBObject("$sort", new BasicDBObject("_id.name", 1));
-            parametros.add(sort);
+            parametros.add(Aggregates.sort(new Document("_id.name", 1)));
         }
 
-        DBObject skip = new BasicDBObject("$skip", first);
-        parametros.add(skip);
+        parametros.add(Aggregates.skip(first));
+        parametros.add(Aggregates.limit(pageSize));
 
-        DBObject limit = new BasicDBObject("$limit", pageSize);
-        parametros.add(limit);
+        List<Bson> totalPipeline = new ArrayList<Bson>();
+        totalPipeline.add(Aggregates.match(matchProj));
+        totalPipeline.addAll(parametrosGroup);
 
-        DBObject[] parameters = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-
-        DBObject[] parametersGroup = new DBObject[parametrosGroup.size()];
-        parametersGroup = parametrosGroup.toArray(parametersGroup);
-
-        match.put("$match", matchProj);
-
-        AggregationOutput outputTotal = null;
-
-        outputTotal = ds.getCollection(Patent.class).aggregate(match, parametersGroup);
-
-        BasicDBList outputListTotal = (BasicDBList) outputTotal.getCommandResult().get("result");
-        for (Object patent : outputListTotal) {
-            DBObject result = (DBObject) patent;
-            this.setCount(Integer.parseInt(result.get("documentCount").toString()));
+        List<Document> outputListTotal = patentDocs().aggregate(totalPipeline)
+                .into(new ArrayList<Document>());
+        for (Document result : outputListTotal) {
+            this.setCount(toInt(result.get("documentCount")));
             break;
         }
 
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(match, parameters);
-        BasicDBList outputList = (BasicDBList) output.getCommandResult().get("result");
+        List<Bson> pagePipeline = new ArrayList<Bson>();
+        pagePipeline.add(Aggregates.match(matchProj));
+        pagePipeline.addAll(parametros);
+
+        List<Document> outputList = patentDocs().aggregate(pagePipeline)
+                .into(new ArrayList<Document>());
 
         List<Applicant> datasource = new ArrayList<Applicant>();
-        for (Object patent : outputList) {
-            DBObject aux = (DBObject) patent;
-            DBObject result = (DBObject) aux.get("_id");
+        for (Document aux : outputList) {
+            Document result = aux.get("_id", Document.class);
+            if (result == null) {
+                continue;
+            }
             Applicant applicant = new Applicant();
             if (result.get("name") != null) {
                 applicant.setName(result.get("name").toString());
@@ -360,7 +320,7 @@ public class ApplicantRepository {
             if (result.get("acronym") != null) {
                 applicant.setAcronym(result.get("acronym").toString());
             }
-            DBObject nature = (DBObject) result.get("nature");
+            Document nature = result.get("nature", Document.class);
             if (nature != null) {
                 ApplicantType realApplicantType = new ApplicantType();
                 realApplicantType.setName((String) nature.get("name"));
@@ -369,9 +329,8 @@ public class ApplicantRepository {
                 applicant.setType(null);
             }
 
-            DBObject country = (DBObject) result.get("country");
+            Document country = result.get("country", Document.class);
             if (country != null) {
-
                 Country realCountry = new Country();
                 realCountry.setAcronym((String) country.get("acronym"));
                 realCountry.setName((String) country.get("name"));
@@ -380,7 +339,7 @@ public class ApplicantRepository {
                 applicant.setCountry(null);
             }
 
-            DBObject state = (DBObject) result.get("state");
+            Document state = result.get("state", Document.class);
             if (state != null) {
                 State realState = new State();
                 realState.setAcronym((String) state.get("acronym"));
@@ -390,8 +349,9 @@ public class ApplicantRepository {
             } else {
                 applicant.setState(null);
             }
-            applicant.setHarmonized((Boolean) result.get("harmonized"));
-            applicant.setDocumentCount((Integer) aux.get("documentCount"));
+            Boolean harmonized = result.getBoolean("harmonized");
+            applicant.setHarmonized(harmonized);
+            applicant.setDocumentCount(toInt(aux.get("documentCount")));
             datasource.add(applicant);
         }
 
@@ -411,7 +371,8 @@ public class ApplicantRepository {
      * @return List&lt;Applicant&gt; - List of the applicants to be put in the
      * table.
      */
-    public List<Applicant> load(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters) {
+    public List<Applicant> load(int first, int pageSize, String sortField, int sortOrder,
+            Map<String, String> filters) {
         return load(first, pageSize, sortField, sortOrder, filters, null);
     }
 
@@ -422,35 +383,28 @@ public class ApplicantRepository {
      * @return boolean - The existence or not of an applicant in a project.
      */
     public boolean exists(Applicant applicant) {
+        List<Bson> pipeline = new ArrayList<Bson>();
+        pipeline.add(Aggregates.match(new Document("project.$id", currentProject.getId())
+                .append("blacklisted", false)));
+        pipeline.add(Aggregates.unwind("$applicants"));
+        pipeline.add(Aggregates.match(new Document("applicants.country.acronym",
+                applicant.getCountry().getAcronym())
+                .append("applicants.name", applicant.getName())));
+        pipeline.add(Aggregates.group(new Document("name", "$applicants.name")));
 
-        ArrayList<DBObject> parametros = new ArrayList<DBObject>();
+        List<Document> outputList = patentDocs().aggregate(pipeline)
+                .into(new ArrayList<Document>());
+        return outputList.isEmpty();
+    }
 
-        DBObject matchProj = new BasicDBObject();
-        matchProj.put("project.$id", currentProject.getId());
-        matchProj.put("blacklisted", false);
-        DBObject matchP = new BasicDBObject("$match", matchProj);
-
-        DBObject unwind = new BasicDBObject("$unwind", "$applicants");
-        parametros.add(unwind);
-
-        DBObject fields = new BasicDBObject("applicants.country.acronym", applicant.getCountry().getAcronym());
-        fields.put("applicants.name", applicant.getName());
-        DBObject match = new BasicDBObject("$match", fields);
-        parametros.add(match);
-
-        DBObject idData = new BasicDBObject("name", "$applicants.name");
-        DBObject field = new BasicDBObject("_id", idData);
-        DBObject group = new BasicDBObject("$group", field);
-        parametros.add(group);
-
-        DBObject[] parameters = new DBObject[parametros.size()];
-        parameters = parametros.toArray(parameters);
-
-        AggregationOutput output = ds.getCollection(Patent.class).aggregate(matchP, parameters);
-
-        BasicDBList outputList = (BasicDBList) output.getCommandResult().get("result");
-        return outputList.size() == 0;
-
+    private static int toInt(Object value) {
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return Integer.parseInt(value.toString());
     }
 
     public int getCount() {

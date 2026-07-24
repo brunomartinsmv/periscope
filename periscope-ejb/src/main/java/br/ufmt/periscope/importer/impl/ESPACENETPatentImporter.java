@@ -27,6 +27,7 @@ import jakarta.inject.Inject;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 
 public class ESPACENETPatentImporter implements PatentImporter {
@@ -178,7 +179,7 @@ public class ESPACENETPatentImporter implements PatentImporter {
 
             switch (cell.getCellType()) {
 
-                case Cell.CELL_TYPE_STRING:
+                case CellType.STRING:
                     contentString = cell.getStringCellValue().replaceAll("[\u2002]", " "); // Isso é para substituir o caracter especial por espaço em codificaçao UTF8
                     fillPatentXLS(cell.getColumnIndex(), contentString.replaceAll("[\u00e2][\u20ac][\u201a]", " ")); // // Isso é para substituir o caracter especial por espaço em codificaçao CP1252
                     break;

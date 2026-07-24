@@ -2,9 +2,9 @@ package br.ufmt.periscope.model;
 
 import br.ufmt.periscope.enumerated.ClassificationType;
 
-import com.github.jmkgreen.morphia.annotations.Embedded;
+import dev.morphia.annotations.Embedded;
 
-@Embedded(concreteClass = Classification.class)
+@Embedded
 public class Classification {
 
     private String value;

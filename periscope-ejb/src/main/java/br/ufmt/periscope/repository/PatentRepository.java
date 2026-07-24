@@ -5,21 +5,23 @@ import br.ufmt.periscope.importer.decorator.PatentValidator;
 import br.ufmt.periscope.indexer.PatentIndexer;
 import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.model.Project;
-import com.github.jmkgreen.morphia.Datastore;
-import com.github.jmkgreen.morphia.query.Query;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-import com.mongodb.Mongo;
-import com.mongodb.gridfs.GridFS;
-import java.net.UnknownHostException;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
+import dev.morphia.Datastore;
+import dev.morphia.query.FindOptions;
+import dev.morphia.query.Query;
+import static dev.morphia.query.filters.Filters.eq;
+import static dev.morphia.query.filters.Filters.regex;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 
 @Named
@@ -27,12 +29,12 @@ public class PatentRepository {
 
     @Inject
     private Datastore ds;
-    private @Inject
-    PatentIndexer patentIndexer;
-    private @Inject
-    Project currentProject;
-    private @Inject
-    PatentValidator validator;
+    @Inject
+    private PatentIndexer patentIndexer;
+    @Inject
+    private Project currentProject;
+    @Inject
+    private PatentValidator validator;
     private Boolean completed;
     private Boolean blacklisted;
     private Integer rowCount = null;
@@ -84,181 +86,186 @@ public class PatentRepository {
     }
 
     public boolean patentExistsForProject(Patent patent, Project project) {
-        boolean exists;
-        if(patent.getPublicationNumber() != null && !patent.getPublicationNumber().equals("")){
-            exists = ds.find(Patent.class)
-                .field("publicationNumber").equal(patent.getPublicationNumber())
-                .field("project").equal(project)
-                .countAll() > 0;
-        }else{
-            exists = ds.find(Patent.class)
-                .field("applicationNumber").equal(patent.getApplicationNumber())
-                .field("project").equal(project)
-                .countAll() > 0;
+        if (patent.getPublicationNumber() != null && !patent.getPublicationNumber().equals("")) {
+            return ds.find(Patent.class)
+                    .filter(
+                            eq("publicationNumber", patent.getPublicationNumber()),
+                            eq("project", project))
+                    .count() > 0;
         }
-        return exists;
+        return ds.find(Patent.class)
+                .filter(
+                        eq("applicationNumber", patent.getApplicationNumber()),
+                        eq("project", project))
+                .count() > 0;
     }
 
     public void sendPatentToBlacklist(Patent patent) {
-        DBObject criteria = new BasicDBObject("_id", patent.getId());
-        DBObject update = new BasicDBObject("$set", new BasicDBObject("blacklisted", !patent.getBlacklisted()));
-        ds.getCollection(Patent.class).update(criteria, update);
+        MongoCollection<Document> coll = ds.getDatabase()
+                .getCollection(ds.getMapper().getEntityModel(Patent.class).getCollectionName());
+        coll.updateOne(
+                Filters.eq("_id", patent.getId()),
+                Updates.set("blacklisted", !patent.getBlacklisted()));
     }
 
     public void savePatent(Patent patent) {
         validator.validate(patent);
         patentIndexer.indexPatent(patent);
-        System.out.println("1");
         ds.save(patent);
     }
 
     public List<Patent> getPatentsComplete(Project project, Boolean complete) {
         return ds.find(Patent.class)
-                .field("completed").equal(complete)
-                .field("blacklisted").equal(false)
-                .field("project").equal(project)
-                .asList();
+                .filter(
+                        eq("completed", complete),
+                        eq("blacklisted", false),
+                        eq("project", project))
+                .iterator().toList();
     }
 
     public List<Patent> getPatentsDarklist(Project project, Boolean darklist) {
         return ds.find(Patent.class)
-                .field("blacklisted").equal(darklist)
-                .field("project").equal(project)
-                .asList();
+                .filter(
+                        eq("blacklisted", darklist),
+                        eq("project", project))
+                .iterator().toList();
     }
 
     public List<Patent> getAllPatents(Project project) {
         return ds.find(Patent.class)
-                .field("project").equal(project)
-                .asList();
+                .filter(eq("project", project))
+                .iterator().toList();
     }
 
     public List<Patent> getPatentWithId(Project project, ObjectId id) {
-
         return ds.find(Patent.class)
-                .field("project").equal(project)
-                .field("_id").equal(id)
-                .asList();
-
+                .filter(
+                        eq("project", project),
+                        eq("_id", id))
+                .iterator().toList();
     }
 
     public List<Patent> getPatentWithApplicant(Project project, String applicantName) {
         return ds.find(Patent.class)
-                .field("project").equal(project)
-                .field("applicants.name").equal(applicantName)
-                .asList();
+                .filter(
+                        eq("project", project),
+                        eq("applicants.name", applicantName))
+                .iterator().toList();
     }
 
     public Date getMinDate(Project currentProject, int selectedDate) {
-        String date = "publicationDate";
-        if (selectedDate == 2) {
-            date = "applicationDate";
-        }
-        BasicDBObject filters = new BasicDBObject("project.$id", currentProject.getId());
-        filters.put("blacklisted", false);
-        DBCursor dbc = ds.getCollection(Patent.class).find(filters).sort(new BasicDBObject(date, 1)).limit(1);
-        Date data = (Date) dbc.next().get(date);
-        return data;
+        String date = selectedDate == 2 ? "applicationDate" : "publicationDate";
+        MongoCollection<Document> coll = ds.getDatabase()
+                .getCollection(ds.getMapper().getEntityModel(Patent.class).getCollectionName());
+        Document doc = coll.find(Filters.and(
+                        Filters.eq("project.$id", currentProject.getId()),
+                        Filters.eq("blacklisted", false)))
+                .sort(Sorts.ascending(date))
+                .limit(1)
+                .first();
+        return doc == null ? null : doc.getDate(date);
     }
 
     public Date getMaxDate(Project currentProject, int selectedDate) {
-        String date = "publicationDate";
-        if (selectedDate == 2) {
-            date = "applicationDate";
-        }
-        BasicDBObject filters = new BasicDBObject("project.$id", currentProject.getId());
-        filters.put("blacklisted", false);
-        DBCursor dbc = ds.getCollection(Patent.class).find(filters).sort(new BasicDBObject(date, -1)).limit(1);
-        Date data = (Date) dbc.next().get(date);
-        return data;
+        String date = selectedDate == 2 ? "applicationDate" : "publicationDate";
+        MongoCollection<Document> coll = ds.getDatabase()
+                .getCollection(ds.getMapper().getEntityModel(Patent.class).getCollectionName());
+        Document doc = coll.find(Filters.and(
+                        Filters.eq("project.$id", currentProject.getId()),
+                        Filters.eq("blacklisted", false)))
+                .sort(Sorts.descending(date))
+                .limit(1)
+                .first();
+        return doc == null ? null : doc.getDate(date);
     }
 
-//    public GridFS getFs() throws UnknownHostException {
-//        Mongo mongo = new Mongo("localhost", 27017);
-//        DB db = mongo.getDB("Periscope");
-//        GridFS fs = new GridFS(db);
-//        return fs;
-//    }
-    
     public List<Patent> load(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters) {
-        Query query = ds.find(Patent.class)
-                .field("project").equal(this.currentProject)
-                .field("blacklisted").equal(this.blacklisted);
+        Query<Patent> query = ds.find(Patent.class)
+                .filter(
+                        eq("project", this.currentProject),
+                        eq("blacklisted", this.blacklisted));
         if (this.completed != null) {
-            query.field("completed").equal(this.completed);
+            query.filter(eq("completed", this.completed));
         }
+        applyContainsFilters(query, filters);
+        setRowCount((int) query.count());
 
-        if (sortField != null) {
-            sortField = (sortOrder == 1 ? "-" : "") + sortField;
-            query = query.order(sortField);
-        }
-        for (Map.Entry<String, String> entry : filters.entrySet()) {
-            String column = entry.getKey();
-            String value = entry.getValue();
-            query.field(column).containsIgnoreCase(value);
-        }
-        setRowCount((int) query.countAll());
-        query.offset(first).limit(pageSize);
-        query.retrievedFields(true, "_id","applicationCountry", "titleSelect", "mainClassification", "publicationDate", "applicationNumber", "applicants", "inventors", "blacklisted", "presentationFile", "patentInfo");
-        return query.asList();
-    }
-    public List<Patent> loadApplicantDocs(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters, String name) {
-        Query query = ds.find(Patent.class)
-                .field("project").equal(this.currentProject)
-                .field("applicants.name").equal(name);
-        
-        if (sortField != null) {
-            query = query.order((sortOrder == 1 ? "-" : "") + sortField);
-        }
-        for (Map.Entry<String, String> entry : filters.entrySet()) {
-            String column = entry.getKey();
-            String value = entry.getValue();
-            query.field(column).containsIgnoreCase(value);
-        }
-        setRowCount((int) query.countAll());
-        query.offset(first).limit(pageSize);
-        query.retrievedFields(true, "titleSelect","applicationNumber","applicants", "inventors");
-        return query.asList();
-    }
-    
-    public List<Patent> loadInventorDocs(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters, String name) {
-        Query query = ds.find(Patent.class)
-                .field("project").equal(this.currentProject)
-                .field("inventors.name").equal(name);
-        
-        if (sortField != null) {
-            query = query.order((sortOrder == 1 ? "-" : "") + sortField);
-        }
-        for (Map.Entry<String, String> entry : filters.entrySet()) {
-            String column = entry.getKey();
-            String value = entry.getValue();
-            query.field(column).containsIgnoreCase(value);
-        }
-        setRowCount((int) query.countAll());
-        query.offset(first).limit(pageSize);
-        query.retrievedFields(true, "titleSelect","applicationNumber", "applicants", "inventors");
-        return query.asList();
+        FindOptions options = new FindOptions().skip(first).limit(pageSize);
+        applySort(options, sortField, sortOrder);
+        options.projection().include(
+                "_id", "applicationCountry", "titleSelect", "mainClassification",
+                "publicationDate", "applicationNumber", "applicants", "inventors",
+                "blacklisted", "presentationFile", "patentInfo");
+        return query.iterator(options).toList();
     }
 
-    public List<Patent> loadBrazilian(int first, int pageSize, String sortField, int sortOrder, Map<String, String> filters) {
-        Query query = ds.find(Patent.class)
-                .field("project").equal(this.currentProject)
-                //.field("completed").equal(this.completed)
-                .field("blacklisted").equal(this.blacklisted)
-                .field("priorities.country.acronym").equal("BR");
-        if (sortField != null) {
-            query = query.order((sortOrder == 1 ? "-" : "") + sortField);
+    public List<Patent> loadApplicantDocs(int first, int pageSize, String sortField, int sortOrder,
+            Map<String, String> filters, String name) {
+        Query<Patent> query = ds.find(Patent.class)
+                .filter(
+                        eq("project", this.currentProject),
+                        eq("applicants.name", name));
+        applyContainsFilters(query, filters);
+        setRowCount((int) query.count());
+
+        FindOptions options = new FindOptions().skip(first).limit(pageSize);
+        applySort(options, sortField, sortOrder);
+        options.projection().include("titleSelect", "applicationNumber", "applicants", "inventors");
+        return query.iterator(options).toList();
+    }
+
+    public List<Patent> loadInventorDocs(int first, int pageSize, String sortField, int sortOrder,
+            Map<String, String> filters, String name) {
+        Query<Patent> query = ds.find(Patent.class)
+                .filter(
+                        eq("project", this.currentProject),
+                        eq("inventors.name", name));
+        applyContainsFilters(query, filters);
+        setRowCount((int) query.count());
+
+        FindOptions options = new FindOptions().skip(first).limit(pageSize);
+        applySort(options, sortField, sortOrder);
+        options.projection().include("titleSelect", "applicationNumber", "applicants", "inventors");
+        return query.iterator(options).toList();
+    }
+
+    public List<Patent> loadBrazilian(int first, int pageSize, String sortField, int sortOrder,
+            Map<String, String> filters) {
+        Query<Patent> query = ds.find(Patent.class)
+                .filter(
+                        eq("project", this.currentProject),
+                        eq("blacklisted", this.blacklisted),
+                        eq("priorities.country.acronym", "BR"));
+        applyContainsFilters(query, filters);
+        setRowCount((int) query.count());
+
+        FindOptions options = new FindOptions().skip(first).limit(pageSize);
+        applySort(options, sortField, sortOrder);
+        options.projection().include(
+                "_id", "titleSelect", "mainClassification", "publicationDate",
+                "applicationNumber", "applicants", "inventors", "blacklisted");
+        return query.iterator(options).toList();
+    }
+
+    private void applyContainsFilters(Query<Patent> query, Map<String, String> filters) {
+        if (filters == null) {
+            return;
         }
         for (Map.Entry<String, String> entry : filters.entrySet()) {
-            String column = entry.getKey();
-            String value = entry.getValue();
-            query.field(column).containsIgnoreCase(value);
+            Pattern pattern = Pattern.compile(Pattern.quote(entry.getValue()), Pattern.CASE_INSENSITIVE);
+            query.filter(regex(entry.getKey(), pattern));
         }
-        setRowCount((int) query.countAll());
+    }
 
-        query.offset(first).limit(pageSize);
-        query.retrievedFields(true, "_id", "titleSelect", "mainClassification", "publicationDate", "applicationNumber", "applicants", "inventors", "blacklisted");
-        return query.asList();
+    private void applySort(FindOptions options, String sortField, int sortOrder) {
+        if (sortField == null) {
+            return;
+        }
+        if (sortOrder == 1) {
+            options.sort(dev.morphia.query.Sort.descending(sortField));
+        } else {
+            options.sort(dev.morphia.query.Sort.ascending(sortField));
+        }
     }
 
     public Project getCurrentProject() {
@@ -287,11 +294,9 @@ public class PatentRepository {
 
     public int getRowCount() {
         if (rowCount == null) {
-
-            Query query = ds.find(Patent.class)
-                    .field("project").equal(this.currentProject);
-
-            rowCount = (int) query.countAll();
+            rowCount = (int) ds.find(Patent.class)
+                    .filter(eq("project", this.currentProject))
+                    .count();
         }
         return rowCount;
     }

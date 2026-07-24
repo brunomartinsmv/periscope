@@ -1,7 +1,7 @@
 package br.ufmt.periscope.indexer.resources.analysis;
 
-import com.github.jmkgreen.morphia.annotations.Entity;
-import com.github.jmkgreen.morphia.annotations.Id;
+import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Id;
 import java.io.Serializable;
 import java.util.List;
 

@@ -2,13 +2,12 @@ package br.ufmt.periscope.model;
 
 import java.util.Date;
 
-import com.github.jmkgreen.morphia.annotations.Embedded;
+import dev.morphia.annotations.Embedded;
 
 @Embedded
 public class Priority {
 
     private String value;
-    @Embedded
     private Country country;
     private Date date;
 

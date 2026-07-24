@@ -3,10 +3,8 @@ package br.ufmt.periscope.bean;
 import br.ufmt.periscope.indexer.LuceneIndexerResources;
 import br.ufmt.periscope.indexer.resources.analysis.CommonDescriptor;
 import br.ufmt.periscope.model.ApplicantType;
-import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,16 +13,11 @@ import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import jakarta.inject.Inject;
 
-import org.bson.types.Code;
-
 import br.ufmt.periscope.model.Country;
 import br.ufmt.periscope.model.User;
 import br.ufmt.periscope.util.YamlLoader;
 
-import com.github.jmkgreen.morphia.Datastore;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
+import dev.morphia.Datastore;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -60,6 +53,9 @@ public class SeedBean {
     private String versionNumber = "";
 
     static {
+        // Lucene 6 indexes are not readable by Lucene 9. After upgrading, clear
+        // existing Lucene files under PERISCOPE_DIR before the first deploy so a
+        // fresh index can be created (see LuceneIndexerResources).
         PERISCOPE_DIR = System.getenv("PERISCOPE_DIR");
         if (PERISCOPE_DIR == null) {
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
@@ -86,9 +82,7 @@ public class SeedBean {
         initCountries();
         initApplicantTypes();
         initCommonsDescriptors();
-        insertAlgorithFromFile("lcs", "js/longestCommonSubstring.js");
-        insertAlgorithFromFile("levenshtein", "js/levenshtein.js");
-        insertAlgorithFromFile("LiquidMetal", "js/liquidmetal.js");
+        // system.js / db.eval removed in modern MongoDB; algorithms run in Java (RuleRepository)
 
         try {
             Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/MANIFEST.MF");
@@ -129,36 +123,10 @@ public class SeedBean {
     }
 
     /**
-     * Insere algoritmos javascript no MongoDB
-     *
-     * @param name Nome da função para ser chamada no Mongo
-     * @param path Caminho para o arquivo do algoritmo da função
-     */
-    private void insertAlgorithFromFile(String name, String path) {
-
-        DB db = ds.getDB();
-
-        DBCollection functionsCollection = db.getCollectionFromString("system.js");
-        InputStream is = SeedBean.class.getClassLoader().getResourceAsStream(path);
-        String function = new Scanner(is, "UTF-8").useDelimiter("\\A").next();
-
-        if (function == null) {
-            log.log(Level.SEVERE, "Erro ao ler o arquivo com a função " + name);
-        }
-        Code code = new Code(function);
-        BasicDBObject newFunction = new BasicDBObject();
-        newFunction.put("_id", name);
-        newFunction.put("value", code);
-
-        functionsCollection.save(newFunction);
-
-    }
-
-    /**
      * Inicia as naturezas das patentes a partir do arquivo yaml correspondente
      */
     private void initApplicantTypes() {
-        if (ds.getCount(ApplicantType.class) == 0l) {
+        if (ds.find(ApplicantType.class).count() == 0L) {
             log.info("Nenhuma Natureza encontrada.");
             List<ApplicantType> applicantTypes = YamlLoader
                     .loadList("applicantType-inicial.yaml", ApplicantType.class);
@@ -175,7 +143,7 @@ public class SeedBean {
      * Inicia os países a partir do arquivo yaml correspondente
      */
     private void initCountries() {
-        if (ds.getCount(Country.class) == 0l) {
+        if (ds.find(Country.class).count() == 0L) {
             log.info("Nenhum país encontrado.");
             List<Country> countries = YamlLoader
                     .loadList("country-inicial-data.yaml", Country.class);
@@ -191,7 +159,7 @@ public class SeedBean {
      * Inicia os usuários iniciais a partir do arquivo yaml correspondente
      */
     private void initUsers() {
-        if (ds.getCount(User.class) == 0l) {
+        if (ds.find(User.class).count() == 0L) {
             log.info("Nenhum usuário encontrado.");
             List<User> users = YamlLoader.loadList("user-inicial.yaml", User.class);
             Iterator<User> it = users.iterator();
@@ -207,15 +175,23 @@ public class SeedBean {
      * arquivo yaml correspondente
      */
     private void initCommonsDescriptors() {
-        if (ds.getCount(CommonDescriptor.class) == 0l) {
-            writer = resources.getIndexWriter();
+        if (ds.find(CommonDescriptor.class).count() == 0L) {
             log.info("Nenhum descritor comum encontrado.");
+            writer = resources.getIndexWriter();
+            if (writer == null) {
+                log.log(Level.SEVERE,
+                        "Lucene IndexWriter unavailable under {0}; seeding descriptors to Mongo only",
+                        PERISCOPE_DIR);
+            }
             List<CommonDescriptor> descriptors = YamlLoader
                     .loadList("descriptors.yaml", CommonDescriptor.class);
             Iterator<CommonDescriptor> it = descriptors.iterator();
             while (it.hasNext()) {
                 CommonDescriptor desc = it.next();
                 ds.save(desc);
+                if (writer == null) {
+                    continue;
+                }
                 Document doc = new Document();
                 doc.add(new TextField("id", desc.getWord(), Field.Store.YES));
                 try {
@@ -227,7 +203,9 @@ public class SeedBean {
             }
 
             log.info("Cadastrado " + descriptors.size() + " descritores comuns.");
-            resources.closeWriter(writer);
+            if (writer != null) {
+                resources.closeWriter(writer);
+            }
         }
     }
 }

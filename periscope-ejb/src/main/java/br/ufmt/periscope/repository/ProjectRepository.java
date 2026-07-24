@@ -5,108 +5,112 @@ import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.Rule;
 import br.ufmt.periscope.model.User;
-import com.github.jmkgreen.morphia.Datastore;
-import com.github.jmkgreen.morphia.query.Query;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-import com.mongodb.DBRef;
-import com.mongodb.Mongo;
-import com.mongodb.gridfs.GridFS;
-import java.net.UnknownHostException;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
+import dev.morphia.Datastore;
+import dev.morphia.DeleteOptions;
+import dev.morphia.query.FindOptions;
+import static dev.morphia.query.filters.Filters.eq;
+import static dev.morphia.query.filters.Filters.or;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 
 @Named
 public class ProjectRepository {
 
-    private @Inject
-    Datastore ds;
-    private @Inject
-    PatentIndexer patentIndexer;
-    private @Inject
-    Instance<GridFS> fsProvider;
+    @Inject
+    private Datastore ds;
+    @Inject
+    private PatentIndexer patentIndexer;
+    @Inject
+    private Instance<GridFSBucket> fsProvider;
 
     public List<Project> getProjectList(User user) {
-        Query<Project> query = ds.createQuery(Project.class);
-        query.retrievedFields(false, "patents");
-        query.order("title");
-        if (user.getUserLevel().getAccessLevel() != 10) {
+        FindOptions options = new FindOptions()
+                .sort(dev.morphia.query.Sort.ascending("title"));
+        options.projection().exclude("patents");
 
-            query.or(
-                    query.criteria("owner").equal(user),
-                    query.criteria("observers").hasThisElement(user),
-                    query.criteria("isPublic").equal(true));
+        if (user.getUserLevel().getAccessLevel() != 10) {
+            return ds.find(Project.class)
+                    .filter(or(
+                            eq("owner", user),
+                            eq("observers", user),
+                            eq("isPublic", true)))
+                    .iterator(options)
+                    .toList();
         }
-        List<Project> projetos = query.asList();
-        return projetos;
+        return ds.find(Project.class).iterator(options).toList();
     }
 
     public List<String> getProjectFiles(Project project) {
-        DBObject matchProj = new BasicDBObject();
-        matchProj.put("project.$id", project.getId());
-
-        DBObject param = new BasicDBObject("presentationFile", 1);
-        param.put("patentInfo", 1);
-        param.put("_id", 0);
+        MongoCollection<Document> coll = ds.getDatabase()
+                .getCollection(ds.getMapper().getEntityModel(Patent.class).getCollectionName());
 
         List<String> lista = new ArrayList<String>();
-        DBCursor c = ds.getCollection(Patent.class).find(matchProj, param);
-
-        while (c.hasNext()) {
-            DBObject novo = c.next();
-            DBRef preFile = (DBRef) novo.get("presentationFile");
-            DBRef pInfo = (DBRef) novo.get("patentInfo");
-            if (preFile != null) {
-                lista.add(preFile.getId().toString());
-            }
-            if (pInfo != null) {
-                lista.add(pInfo.getId().toString());
-            }
+        for (Document novo : coll.find(Filters.eq("project.$id", project.getId()))
+                .projection(Projections.include("presentationFile", "patentInfo"))) {
+            Object preFile = novo.get("presentationFile");
+            Object pInfo = novo.get("patentInfo");
+            addDbRefId(lista, preFile);
+            addDbRefId(lista, pInfo);
         }
-        if (lista.size() > 0) {
-            return lista;
-        }
-        return null;
+        return lista.isEmpty() ? null : lista;
     }
 
-    public void deleteProject(String id) throws UnknownHostException {
+    private void addDbRefId(List<String> lista, Object ref) {
+        if (ref == null) {
+            return;
+        }
+        if (ref instanceof Document) {
+            Object id = ((Document) ref).get("$id");
+            if (id != null) {
+                lista.add(id.toString());
+            }
+        } else if (ref instanceof org.bson.types.ObjectId) {
+            lista.add(ref.toString());
+        }
+    }
+
+    public void deleteProject(String id) {
         Project p = new Project();
         p.setId(new ObjectId(id));
         patentIndexer.deleteIndexesForProject(p);
         List<String> files = getProjectFiles(p);
 
         if (files != null) {
-            GridFS fs = fsProvider.get();
-            ObjectId _id;
+            GridFSBucket fs = fsProvider.get();
             for (String file : files) {
-                _id = new ObjectId(file);
-                fs.remove(_id);
-                _id = null;
+                fs.delete(new ObjectId(file));
             }
         }
 
         deleteProject(p);
     }
 
-//    public GridFS getFs() throws UnknownHostException {
-//        Mongo mongo = new Mongo("localhost", 27017);
-//        DB db = mongo.getDB("Periscope");
-//        GridFS fs = new GridFS(db);
-//        return fs;
-//    }
     public boolean isEmptyPatent(Project currentProject) {
-        return ds.getCollection(Project.class).findOne(new BasicDBObject("_id", currentProject.getId()), new BasicDBObject("patents", new BasicDBObject("$slice", 1))).get("patents") == null;
+        MongoCollection<Document> coll = ds.getDatabase()
+                .getCollection(ds.getMapper().getEntityModel(Project.class).getCollectionName());
+        Document doc = coll.find(Filters.eq("_id", currentProject.getId()))
+                .projection(Projections.fields(Projections.slice("patents", 1)))
+                .first();
+        if (doc == null) {
+            return true;
+        }
+        Object patents = doc.get("patents");
+        return patents == null || (patents instanceof List && ((List<?>) patents).isEmpty());
     }
 
     public void deleteProject(Project project) {
-        ds.delete(ds.createQuery(Patent.class).field("project").equal(project));
-        ds.delete(ds.createQuery(Rule.class).field("project").equal(project));
+        DeleteOptions multi = new DeleteOptions().multi(true);
+        ds.find(Patent.class).filter(eq("project", project)).delete(multi);
+        ds.find(Rule.class).filter(eq("project", project)).delete(multi);
         ds.delete(project);
     }
 }
