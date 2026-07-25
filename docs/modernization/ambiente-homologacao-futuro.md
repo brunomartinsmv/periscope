@@ -5,32 +5,37 @@ Não há ambiente de homologação hoje. Requisitos quando existir:
 ## Infraestrutura
 
 - [ ] MongoDB dedicado com snapshot de dados **anonimizados**
-- [ ] WildFly (31+) configurado via variáveis de ambiente:
+- [ ] WildFly **34** com WAR único `periscope.war` e variáveis:
   - `MONGODB_URI`
-  - `PERISCOPE_DIR`
+  - `MONGODB_DATABASE` (default `Periscope`)
+  - `PERISCOPE_DIR` (índice Lucene 9)
 - [ ] Rede/segredos gerenciados (sem credenciais no repositório)
-- [ ] Context-root e HTTPS definidos pelo ambiente
+- [ ] Context-root `/periscope` e HTTPS definidos pelo ambiente
+- [ ] Healthcheck HTTP: `GET /periscope/rest/health` → `200` e `"status":"UP"`
 
 ## Pipeline
 
-- [ ] CI/CD com build Maven (JDK 21)
+- [x] CI GitHub Actions com build Maven (JDK 21) — Fase 8a (`.github/workflows/ci.yml`)
+- [x] Job de integração com Testcontainers (`-Pit`)
 - [ ] Deploy automático para homologação após merge em branch de release
-- [ ] Marcadores de deploy (`*.deployed` / healthcheck HTTP)
+- [ ] Marcadores de deploy (`*.deployed` / healthcheck HTTP acima)
 - [ ] Rollback documentado
 
 ## Qualidade
 
-- [ ] Testes E2E contra homologação antes de produção
+- [x] Testes unitários + IT Morphia/Mongo (Fase 8a)
+- [ ] Testes E2E contra homologação (Fase 8b)
 - [ ] Smoke checklist (login, projetos, importação, harmonização, relatório)
-- [ ] Dataset de teste versionado ou restaurável a partir do snapshot
+- [x] Dataset de teste versionado — `docs/modernization/dataset-teste/`
 
 ## Observabilidade
 
 - [ ] Logs centralizados do WildFly
-- [ ] Métricas básicas de disponibilidade da app e do MongoDB
+- [ ] Métricas básicas de disponibilidade (health + MongoDB)
 
 ## Relação com as fases
 
 - Fase 0: documenta necessidade (este arquivo)
-- Fase 6: empacota WAR + Compose (base para homologação)
-- Fase 8: CI/CD e homologação operacional
+- Fase 6: empacota WAR único + Compose (base para homologação)
+- Fase 8a: CI, testes, health endpoint
+- Fase 8b: OpenAPI, E2E, gates de cobertura

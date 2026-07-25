@@ -20,6 +20,7 @@ Plano de atualização tecnológica do sistema Periscope (UFMT), dividido em fas
 - Lucene 9.12.0 (harmonização Fast-Join; Fase 4)
 - PDFBox 3.0.3, POI 5.3.0, upload nativo PrimeFaces (Fase 5)
 - **WAR único** `periscope-web/target/periscope.war`, WildFly 34, Docker Compose (Fase 6 — **concluída**)
+- CI + testes unitários/IT + health `/rest/health` (Fase **8a** — em andamento nesta branch)
 
 ## Fases e documentos
 
@@ -33,9 +34,10 @@ Plano de atualização tecnológica do sistema Periscope (UFMT), dividido em fas
 | 5 | [fase-05-bibliotecas.md](fase-05-bibliotecas.md) | PDFBox 3, POI 5, PrimeFaces 14 | Feita |
 | 6 | [fase-06-war-wildfly.md](fase-06-war-wildfly.md) | WAR único, WildFly 34, Docker Compose | **Concluída** |
 | 7 | fase-07-spa.md | API REST + frontend SPA | Pendente (doc ainda não criado) |
-| 8 | fase-08-qualidade-ci.md | Testes, CI/CD, homologação futura | Pendente (doc ainda não criado) |
+| 8a | [fase-08-qualidade-ci.md](fase-08-qualidade-ci.md) | CI, unitários, IT Testcontainers, health | **Em andamento** |
+| 8b | (mesmo doc, seção 8b) | OpenAPI, E2E, gates de cobertura | Pendente |
 
-> **Nota:** os links das Fases 7 e 8 ficam intencionalmente sem arquivo até as etapas correspondentes. A Fase 6 já possui documento de planejamento/aceitação em `fase-06-war-wildfly.md`.
+> **Nota:** o link da Fase 7 fica intencionalmente sem arquivo até a etapa correspondente.
 
 ## Ordem de execução
 
