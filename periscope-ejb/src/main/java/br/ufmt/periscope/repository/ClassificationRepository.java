@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
 import br.ufmt.periscope.model.Patent;
@@ -16,6 +17,7 @@ import com.mongodb.client.MongoCollection;
 import dev.morphia.Datastore;
 import org.bson.Document;
 
+@ApplicationScoped
 @Named
 public class ClassificationRepository {
 

@@ -18,10 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+@ApplicationScoped
 @Named
 public class ProjectRepository {
 

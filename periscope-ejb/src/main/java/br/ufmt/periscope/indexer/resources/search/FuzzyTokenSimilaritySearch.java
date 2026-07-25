@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -31,6 +32,7 @@ import org.apache.lucene.search.TermQuery;
  * @author horgun
  */
 
+@ApplicationScoped
 @Named
 public class FuzzyTokenSimilaritySearch {
     private final float editSimilarityThreshold = 0.75f;

@@ -1,5 +1,7 @@
 package br.ufmt.periscope.lazy;
 
+import java.io.Serializable;
+
 import br.ufmt.periscope.model.Inventor;
 import br.ufmt.periscope.repository.InventorRepository;
 import java.util.ArrayList;
@@ -14,7 +16,9 @@ import org.primefaces.model.SortMeta;
 import org.primefaces.model.SortOrder;
 
 @Named
-public class LazyInventorDataModel extends LazyDataModel<Inventor> {
+public class LazyInventorDataModel extends LazyDataModel<Inventor>  implements Serializable{
+
+    private static final long serialVersionUID = 1L;
 
     private @Inject
     InventorRepository inventorRepository;

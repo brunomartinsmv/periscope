@@ -1,8 +1,11 @@
 package br.ufmt.periscope.util;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class Filters {
+public class Filters implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private boolean complete;
     private int selecionaData;

@@ -9,9 +9,11 @@ import dev.morphia.Datastore;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import org.bson.Document;
 
+@ApplicationScoped
 @Named
 public class PriorityDateRepository {
 

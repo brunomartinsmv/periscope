@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
 import br.ufmt.periscope.enumerated.ClassificationType;
@@ -18,6 +19,7 @@ import br.ufmt.periscope.model.Patent;
 import br.ufmt.periscope.model.Priority;
 import br.ufmt.periscope.repository.ApplicantTypeRepository;
 
+@ApplicationScoped
 @Named
 public class PatentValidator {
 

@@ -1,6 +1,7 @@
 package br.ufmt.periscope.controller;
 
 import br.ufmt.periscope.indexer.PatentIndexer;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,7 +34,9 @@ import java.net.UnknownHostException;
  */
 @Named
 @ViewScoped
-public class ProjectController {
+public class ProjectController implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private @Inject
     Datastore ds;

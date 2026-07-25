@@ -1,20 +1,32 @@
 package br.ufmt.periscope.model;
 
-import dev.morphia.annotations.Embedded;
 import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Id;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import org.bson.types.ObjectId;
 
-@Embedded
 @Entity
 public class Country implements Serializable, Comparable<Country> {
 
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    private ObjectId id;
     private String acronym;
     private String name;
     private List<State> states = new ArrayList<State>();
 
     public Country() {
+    }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
     }
 
     public String getAcronym() {

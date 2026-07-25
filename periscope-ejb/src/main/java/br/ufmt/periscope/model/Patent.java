@@ -1,5 +1,7 @@
 package br.ufmt.periscope.model;
 
+import java.io.Serializable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -12,7 +14,9 @@ import dev.morphia.annotations.Id;
 import dev.morphia.annotations.Reference;
 
 @Entity
-public class Patent {
+public class Patent implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     private ObjectId id;

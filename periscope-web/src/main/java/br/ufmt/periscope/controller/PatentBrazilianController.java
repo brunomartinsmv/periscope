@@ -1,6 +1,7 @@
 package br.ufmt.periscope.controller;
 
 import br.ufmt.periscope.lazy.LazyPatentBrazilianDataModel;
+import java.io.Serializable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Named;
 import jakarta.faces.view.ViewScoped;
@@ -17,7 +18,9 @@ import br.ufmt.periscope.qualifier.CurrentProject;
  */
 @Named
 @ViewScoped
-public class PatentBrazilianController {
+public class PatentBrazilianController implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private @Inject
     @CurrentProject

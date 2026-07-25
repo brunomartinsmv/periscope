@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
 import br.ufmt.periscope.model.ApplicantType;
@@ -15,6 +16,7 @@ import dev.morphia.query.Sort;
 
 import static dev.morphia.query.filters.Filters.eq;
 
+@ApplicationScoped
 @Named
 public class ApplicantTypeRepository {
 

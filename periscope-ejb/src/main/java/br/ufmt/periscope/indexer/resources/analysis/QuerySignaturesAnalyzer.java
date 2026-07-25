@@ -1,5 +1,7 @@
 package br.ufmt.periscope.indexer.resources.analysis;
 
+import java.io.Serializable;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -18,7 +20,9 @@ import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
  * @author mattyws
  */
 @Named
-public class QuerySignaturesAnalyzer extends Analyzer {
+public class QuerySignaturesAnalyzer extends Analyzer  implements Serializable{
+
+    private static final long serialVersionUID = 1L;
 
     @Inject
     private CommonDescriptorsSet descriptorSet;

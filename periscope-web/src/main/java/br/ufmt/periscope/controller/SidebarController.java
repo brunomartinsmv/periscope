@@ -1,5 +1,7 @@
 package br.ufmt.periscope.controller;
 
+import java.io.Serializable;
+
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.qualifier.CurrentProject;
 import br.ufmt.periscope.repository.ProjectRepository;
@@ -11,7 +13,9 @@ import jakarta.inject.Inject;
  * Classe controller responsável por operações de visualização relacionadas aos menus da barra lateral
  */
 @Named("sidebarController")
-public class SidebarController {
+public class SidebarController implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private @Inject
     @CurrentProject

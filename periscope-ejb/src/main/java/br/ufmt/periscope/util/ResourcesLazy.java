@@ -16,11 +16,13 @@ import br.ufmt.periscope.model.User;
 import com.mongodb.client.gridfs.GridFSBucket;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
 /**
  * Factory CDI para instâncias do modelo e GridFSBucket.
  */
+@ApplicationScoped
 @Named
 public class ResourcesLazy {
 

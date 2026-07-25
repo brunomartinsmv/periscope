@@ -1,5 +1,7 @@
 package br.ufmt.periscope.indexer.resources.analysis;
 
+import java.io.Serializable;
+
 import dev.morphia.Datastore;
 import java.util.List;
 import jakarta.inject.Inject;
@@ -11,7 +13,9 @@ import jakarta.inject.Named;
  *
  */
 @Named
-public class CommonDescriptorsSet {
+public class CommonDescriptorsSet implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private @Inject
     Datastore ds;

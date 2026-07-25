@@ -6,9 +6,11 @@ import br.ufmt.periscope.util.Filters;
 import java.util.Collections;
 import java.util.List;
 import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import br.ufmt.periscope.compat.chart.ChartSeries;
 
+@ApplicationScoped
 @Named
 public class PriorityCountryReport {
 

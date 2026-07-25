@@ -1,5 +1,6 @@
 package br.ufmt.periscope.controller;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +30,9 @@ import dev.morphia.Datastore;
  */
 @Named
 @ViewScoped
-public class UserController {
+public class UserController implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private @Inject
     Datastore ds;
