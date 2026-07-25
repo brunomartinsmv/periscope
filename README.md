@@ -70,8 +70,54 @@ Sucesso: marcador `periscope.war.deployed` em `standalone/deployments/`. URL: ht
 | `MONGODB_URI` | `mongodb://localhost:27017` | URI do MongoDB |
 | `MONGODB_DATABASE` | `Periscope` | Nome do banco |
 | `PERISCOPE_DIR` | `/opt/periscope` | Diretório do índice Lucene (deve ser gravável) |
+| `PERISCOPE_JWT_SECRET` | *(efêmero em memória)* | Segredo HS256 da API REST; defina em produção |
+| `PERISCOPE_JWT_EXPIRATION_HOURS` | `8` | Validade do JWT |
+| `PERISCOPE_CORS_ORIGINS` | `http://localhost:5173` | Origins CORS permitidas (separadas por vírgula) |
 
 No Docker Compose, `MONGODB_URI` aponta para o serviço `mongodb`.
+
+## API REST (Fase 7)
+
+Base: `http://localhost:8080/periscope/rest`
+
+- Health: `GET /health`
+- Login: `POST /auth/login` com `{"username":"admin","password":"123456"}` → `{token,user}`
+- Demais endpoints exigem `Authorization: Bearer <token>`
+- Documentação completa: [docs/modernization/fase-07-spa.md](docs/modernization/fase-07-spa.md)
+
+Exemplo:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/periscope/rest/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"123456"}' | jq -r .token)
+curl -s http://localhost:8080/periscope/rest/auth/me -H "Authorization: Bearer $TOKEN"
+```
+
+## SPA React (`periscope-ui`)
+
+Interface moderna em React + Vite + TypeScript consumindo a API REST.
+
+**Dev (com proxy para o WildFly):**
+
+```bash
+cd periscope-ui
+npm ci
+npm run dev
+# → http://localhost:5173/periscope/app/  (login: admin / 123456)
+```
+
+**Embarcar no WAR** (Maven não executa Node; a pasta `webapp/app/` é gitignored):
+
+```bash
+cd periscope-ui && npm run build:war
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+mvn -B package
+cp periscope-web/target/periscope.war /opt/jboss/wildfly-34.0.1.Final/standalone/deployments/
+# → http://localhost:8080/periscope/app/
+```
+
+Detalhes: [periscope-ui/README.md](periscope-ui/README.md) e [docs/modernization/fase-07-spa.md](docs/modernization/fase-07-spa.md).
 
 ## Context root
 

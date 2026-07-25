@@ -26,6 +26,11 @@
         <param-name>primefaces.UPLOADER</param-name>
         <param-value>native</param-value>
     </context-param>
+    <!-- Enforce @RolesAllowed / @PermitAll on JAX-RS resources (RESTEasy) -->
+    <context-param>
+        <param-name>resteasy.role.based.security</param-name>
+        <param-value>true</param-value>
+    </context-param>
     <servlet>
         <servlet-name>Faces Servlet</servlet-name>
         <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>

@@ -73,20 +73,20 @@ public class HealthResource {
                 dirPath = System.getenv().getOrDefault("PERISCOPE_DIR", "/opt/periscope");
             }
             File dir = new File(dirPath);
-            if (!dir.isDirectory() || !dir.canRead()) {
+            if (!dir.isDirectory() || !dir.canRead() || !dir.canWrite()) {
                 return false;
             }
             File[] children = dir.listFiles();
             if (children == null) {
                 return false;
             }
-            // Prefer a Lucene segments_* file; otherwise accept a non-empty readable directory
             for (File child : children) {
                 if (child.isFile() && child.getName().startsWith("segments") && Files.isReadable(child.toPath())) {
                     return true;
                 }
             }
-            return children.length > 0 && dir.canRead();
+            // Empty but writable index dir is acceptable before first import/reindex
+            return dir.canWrite();
         } catch (RuntimeException ex) {
             return false;
         }

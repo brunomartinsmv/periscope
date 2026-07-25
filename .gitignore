@@ -1,3 +1,6 @@
 /target
 */target
 org.*
+
+# SPA build embutido no WAR (gerado via periscope-ui: npm run build:war)
+periscope-web/src/main/webapp/app/

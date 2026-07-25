@@ -79,5 +79,10 @@ run it if you wipe `~/.m2`. The parent POM also exposes
 - Cobertura: JaCoCo 0.8.12 no ciclo `test`. Relatórios em `*/target/site/jacoco/`.
 - Health: `GET http://localhost:8080/periscope/rest/health` → JSON
   `status` / `mongodb` / `luceneIndex` (200 se UP, 503 se DOWN).
+- API REST (Fase 7): base `/periscope/rest`. Login JWT
+  `POST /auth/login` (`admin`/`123456`); demais rotas com
+  `Authorization: Bearer <token>`. Ver `docs/modernization/fase-07-spa.md`.
+  Env: `PERISCOPE_JWT_SECRET`, `PERISCOPE_CORS_ORIGINS`,
+  `PERISCOPE_JWT_EXPIRATION_HOURS`.
 - O feature Cucumber `periscope-web/.../login.feature` ainda não tem runner
   (E2E fica para Fase 8b). Não há lint Spotless/ESLint nesta fase.
