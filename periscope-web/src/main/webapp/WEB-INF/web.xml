@@ -35,6 +35,14 @@
         <servlet-name>Faces Servlet</servlet-name>
         <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
+        <!-- Required for primefaces.UPLOADER=native (Servlet 3+ Part API).
+             Without multipart-config the container does not parse multipart/form-data,
+             so FileUploadEvent is never fired (silent failure in the UI). -->
+        <multipart-config>
+            <max-file-size>52428800</max-file-size><!-- 50 MiB (patent attachments / imports) -->
+            <max-request-size>104857600</max-request-size><!-- 100 MiB -->
+            <file-size-threshold>0</file-size-threshold>
+        </multipart-config>
     </servlet>
     <servlet-mapping>
         <servlet-name>Faces Servlet</servlet-name>

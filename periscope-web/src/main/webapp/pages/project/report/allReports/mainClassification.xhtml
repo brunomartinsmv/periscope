@@ -13,29 +13,34 @@
 
 	<ui:define name="content">
 
-		<h1>Principais Depositantes</h1>
-		<h:panelGrid columns="2">
+		<center><h1>#{msgs['main.classification']}</h1></center>
+		<br/>
+		<h:form id="chart" styleClass="container">
+			<h:panelGrid columns="2" id="tudo" styleClass="container">
 
-			<h:column>
-				<p:tagCloud model="">
-				
-				</p:tagCloud>
-				<p:graphicImage />
-				<p:graphicImage />
-			</h:column>
+				<h:column>
+					<p:outputLabel value="#{msgs['empty']}" rendered="#{mainClassificationController.chartEmpty}" />
+					<p:tagCloud model="#{mainClassificationController.tagCloudModel}"
+							   rendered="#{mainClassificationController.hasData}" />
+				</h:column>
 
-			<h:column>
+				<h:column>
+					<p:dataTable emptyMessage="#{msgs['no.classifications']}"
+								 var="pair" value="#{mainClassificationController.pairs}">
 
-				<p:dataTable emptyMessage="Nenhum depositante cadastrado.">
+						<p:column headerText="#{msgs['classification']}">
+							<h:outputText value="#{pair.key}" />
+						</p:column>
 
-					<p:column headerText="#{msgs['year']}" />
+						<p:column headerText="#{msgs['documents.number']}">
+							<h:outputText value="#{pair.value}" />
+						</p:column>
 
-					<p:column headerText="#{msgs['documents.number']}" />
+					</p:dataTable>
+				</h:column>
 
-				</p:dataTable>
-			</h:column>
-
-		</h:panelGrid>
+			</h:panelGrid>
+		</h:form>
 
 	</ui:define>
 

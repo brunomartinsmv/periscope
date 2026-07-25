@@ -43,9 +43,11 @@
 
                 <h:panelGrid id="tudo" columns="2" styleClass="container">
 
+                    <p:outputLabel value="#{msgs['empty']}" rendered="#{priorityDateController.chartEmpty}" />
 
-                    <p:lineChart id="line" value="#{priorityDateController.model}" rendered="#{priorityDateController.model.series.get(0).getData().size()!=0}"
-                                 legendPosition="e" title="#{msgs['application.year']}"/>
+                    <p:lineChart id="line" model="#{priorityDateController.lineModel}"
+                                 rendered="#{priorityDateController.hasData}"
+                                 style="width:100%;height:400px"/>
 
                     <h:column>
                         <p:graphicImage />

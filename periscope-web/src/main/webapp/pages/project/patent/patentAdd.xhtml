@@ -10,7 +10,7 @@
 
         <ui:define name="content">
             <center><h1>#{msgs['create.patent']}</h1></center>
-            <h:form>
+            <h:form id="patentForm" enctype="multipart/form-data">
 
                 <p:fieldset  toggleable="true" toggleSpeed="500" legend="#{msgs['header']}">
                         <h:panelGrid border="0" columns="2"  >
@@ -54,8 +54,8 @@
                                 </p:column>
                                 <p:column>														
                                     <p:commandButton value="#{msgs['delete']}" 
-                                                     update=":#{p:component('prioridades')}" partialSubmit="true" 
-                                                     process=":#{p:component('prioridades')}"
+                                                     update=":#{p:resolveFirstComponentWithId('prioridades', view).clientId}" partialSubmit="true" 
+                                                     process=":#{p:resolveFirstComponentWithId('prioridades', view).clientId}"
                                                      action="#{patentController.deletePriority(prioridade)}"/>
                                 </p:column>
                             </p:dataTable>
@@ -110,8 +110,8 @@
                                     </p:column>
                                     <p:column>														
                                         <p:commandButton value="#{msgs['delete']}" 
-                                                         update=":#{p:component('applicants')}" partialSubmit="true" 
-                                                         process=":#{p:component('applicants')}"
+                                                         update=":#{p:resolveFirstComponentWithId('applicants', view).clientId}" partialSubmit="true" 
+                                                         process=":#{p:resolveFirstComponentWithId('applicants', view).clientId}"
                                                          action="#{patentController.deleteApplicant(applicant)}"/>
                                     </p:column>
                                 </p:dataTable>
@@ -136,8 +136,8 @@
                                     </p:column>
                                     <p:column>														
                                         <p:commandButton id="linkApplicant" value="#{msgs['link']}" 
-                                                         update=":#{p:component('applicants')}" partialSubmit="true" 
-                                                         process=":#{p:component('applicants')}"
+                                                         update=":#{p:resolveFirstComponentWithId('applicants', view).clientId}" partialSubmit="true" 
+                                                         process=":#{p:resolveFirstComponentWithId('applicants', view).clientId}"
                                                          action="#{patentController.addApplicant(ap)}"/>
                                         <p:tooltip for="linkApplicant">
                                             <p:outputLabel value="Clique para vincular esse depositante à nova patente." escape="false"/>
@@ -194,8 +194,8 @@
                                     </p:column>
                                     <p:column>														
                                         <p:commandButton value="#{msgs['delete']}"
-                                                         update=":#{p:component('inventors')}" partialSubmit="true" 
-                                                         process=":#{p:component('inventors')}" 
+                                                         update=":#{p:resolveFirstComponentWithId('inventors', view).clientId}" partialSubmit="true" 
+                                                         process=":#{p:resolveFirstComponentWithId('inventors', view).clientId}" 
                                                          action="#{patentController.deleteInventor(inventor)}"/>
                                     </p:column>
                                 </p:dataTable>
@@ -220,8 +220,8 @@
                                     </p:column>
                                     <p:column>														
                                         <p:commandButton id="linkInventor" value="#{msgs['link']}"
-                                                         update=":#{p:component('inventors')},addInventors" 
-                                                         partialSubmit="true" process=":#{p:component('inventors')}" 
+                                                         update=":#{p:resolveFirstComponentWithId('inventors', view).clientId},addInventors" 
+                                                         partialSubmit="true" process=":#{p:resolveFirstComponentWithId('inventors', view).clientId}" 
                                                          action="#{patentController.addInventor(inv)}"/>
                                         <p:tooltip for="linkInventor">
                                             <p:outputLabel value="Clique para vincular esse inventor à nova patente." escape="false"/>
@@ -278,17 +278,16 @@
             </h:form>
             <p:dialog id="fileDialog" widgetVar="fileDownloadDialog" modal="true" closable="false"
                       header="#{msgs['options.file']}" resizable="false">
-                <h:form id="fileOptions" >
+                <h:form id="fileOptions" enctype="multipart/form-data">
                     <h:panelGrid columns="2">
                         <h:column>
-                            <p:fileUpload fileUploadListener="#{patentController.uploadPresentationFile}" 
+                            <p:fileUpload listener="#{patentController.uploadPresentationFile}" 
                                           mode="advanced" dragDropSupport="false" auto="true"
-                                          sizeLimit="100000" multiple="false" label="#{msgs['choose.file']}"
-                                          update=":#{p:component('fileOptions')},messages"
-                                          process=":#{p:component('fileOptions')}" 
+                                          sizeLimit="52428800" multiple="false" label="#{msgs['choose.file']}"
+                                          update=":#{p:resolveFirstComponentWithId('fileOptions', view).clientId},messages"
+                                          process=":#{p:resolveFirstComponentWithId('fileOptions', view).clientId}" 
                                           rendered="#{patentController.temporaryPresentationFile == null}"
-                                          showButtons="false" 
-                                          allowTypes="/(\.|\/)(gif|jpeg|png|pdf)$/" />  
+                                          allowTypes="/(\.|\/)(gif|jpe?g|png|pdf)$/" />  
 
                             <p:growl id="messages" showDetail="true"/>
                         </h:column>
@@ -308,16 +307,16 @@
                             <p:fileDownload  value="#{patentController.download}" />  
                         </p:commandButton>
                         <p:commandButton value="#{msgs['delete.file']}" 
-                                         update=":#{p:component('fileOptions')}"
-                                         process=":#{p:component('fileOptions')}" 
+                                         update=":#{p:resolveFirstComponentWithId('fileOptions', view).clientId}"
+                                         process=":#{p:resolveFirstComponentWithId('fileOptions', view).clientId}" 
                                          action="#{patentController.deletePresentationFile()}" 
                                          disabled="#{patentController.temporaryPresentationFile == null}"
                                          onclick="if (!confirm('#{msgs['delete.file']}')) {
                                                      return false;
                                                  }"/>
                         <p:commandButton value="#{msgs['close']}" immediate="true"
-                                         update=":#{p:component('fileOptions')}"
-                                         process=":#{p:component('fileOptions')}"
+                                         update=":#{p:resolveFirstComponentWithId('fileOptions', view).clientId}"
+                                         process=":#{p:resolveFirstComponentWithId('fileOptions', view).clientId}"
                                          onclick="fileDownloadDialog.hide();"  />
                     </center>
                 </h:form>
@@ -325,15 +324,15 @@
 
             <p:dialog id="patentDialog" widgetVar="patentDownloadDialog" modal="true" closable="false"
                       header="#{msgs['options.patent']}" resizable="false">
-                <h:form id="fileOptions2">
+                <h:form id="fileOptions2" enctype="multipart/form-data">
                     <h:panelGrid columns="2">
                         <h:column>
-                            <p:fileUpload fileUploadListener="#{patentController.uploadPatentInfo}" 
+                            <p:fileUpload listener="#{patentController.uploadPatentInfo}" 
                                           mode="advanced" dragDropSupport="false" auto="true"
-                                          update=":#{p:component('fileOptions2')},messages"
-                                          process=":#{p:component('fileOptions2')}" 
+                                          update=":#{p:resolveFirstComponentWithId('fileOptions2', view).clientId},messages"
+                                          process=":#{p:resolveFirstComponentWithId('fileOptions2', view).clientId}" 
                                           rendered="#{patentController.temporaryPatentInfo == null}"
-                                          sizeLimit="5000000" showButtons="false" label="#{msgs['choose.file']}"
+                                          sizeLimit="52428800" label="#{msgs['choose.file']}"
                                           allowTypes="/(\.|\/)(doc|docx|odt|pdf|txt)$/" />  
 
                             <p:growl id="messages" showDetail="true"/>
@@ -354,16 +353,16 @@
                             <p:fileDownload  value="#{patentController.download}" />  
                         </p:commandButton>
                         <p:commandButton value="#{msgs['delete.file']}"
-                                         update=":#{p:component('fileOptions2')}"
-                                         process=":#{p:component('fileOptions2')}" 
+                                         update=":#{p:resolveFirstComponentWithId('fileOptions2', view).clientId}"
+                                         process=":#{p:resolveFirstComponentWithId('fileOptions2', view).clientId}" 
                                          action="#{patentController.deletePatentInfo()}" 
                                          disabled="#{patentController.temporaryPatentInfo == null}"
                                          onclick="if (!confirm('#{msgs['delete.file']}')) {
                                                      return false;
                                                  }"/>
                         <p:commandButton value="#{msgs['close']}" immediate="true"
-                                         update=":#{p:component('fileOptions2')}"
-                                         process=":#{p:component('fileOptions2')}"
+                                         update=":#{p:resolveFirstComponentWithId('fileOptions2', view).clientId}"
+                                         process=":#{p:resolveFirstComponentWithId('fileOptions2', view).clientId}"
                                          onclick="patentDownloadDialog.hide();" />
                     </center>
                 </h:form>

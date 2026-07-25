@@ -21,9 +21,11 @@
 
                 <h:panelGrid id="tudo" columns="2" styleClass="container">
 
-                    <p:barChart id="horizontal" value="#{mainIPCController.model}" rendered="#{mainIPCController.model.series.get(0).getData().size()!=0}"
-                                orientation="horizontal" legendPosition="e" datatipFormat="%s"
-                                title="#{msgs['technological.profile.applicant']}" />
+                    <p:outputLabel value="#{msgs['empty']}" rendered="#{mainIPCController.chartEmpty}" />
+
+                    <p:barChart id="horizontal" model="#{mainIPCController.barModel}"
+                                rendered="#{mainIPCController.hasData}"
+                                style="width:100%;height:400px" />
 
                     <h:column>
                         <p:graphicImage />
@@ -35,10 +37,6 @@
                         <p:dataTable id="datatable"
                                      emptyMessage="#{msgs['no.classifications']}" var="ipc"
                                      value="#{mainIPCController.pairs}" >
-
-                                                <!-- 					<p:column headerText="#{msgs['position']}" > -->
-                            <!-- 						<h:outputText value="ipc." /> -->
-                            <!-- 					</p:column> -->
 
                             <p:column headerText="#{msgs['classification']}">
                                 <h:outputText value="#{ipc.key}" />

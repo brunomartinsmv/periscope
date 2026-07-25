@@ -6,7 +6,7 @@ import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 
-import br.ufmt.periscope.compat.chart.ChartSeries;
+import br.ufmt.periscope.report.ChartSeries;
 
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.repository.PublicationDateRepository;

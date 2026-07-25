@@ -124,7 +124,7 @@ public class HarmonizationResource {
         } else {
             throw ApiException.badRequest("type must be applicant or inventor");
         }
-        return rules.stream().map(RuleDTO::from).toList();
+        return rules.stream().map(r -> RuleDTO.from(r, projectId)).toList();
     }
 
     @POST
@@ -172,7 +172,7 @@ public class HarmonizationResource {
         }
         ruleRepository.setCurrentProject(project);
         ruleRepository.save(rule);
-        return Response.status(Response.Status.CREATED).entity(RuleDTO.from(rule)).build();
+        return Response.status(Response.Status.CREATED).entity(RuleDTO.from(rule, projectId)).build();
     }
 
     @DELETE

@@ -24,12 +24,12 @@
 
                 <h:panelGrid columns="1" id="tudo" styleClass="container" >
 
-                    <p:outputLabel value="#{msgs['empty']}" rendered="#{mainApplicantController.model.series.get(0).getData().size()==0}" />
+                    <p:outputLabel value="#{msgs['empty']}" rendered="#{mainApplicantController.chartEmpty}" />
 
 
-                    <p:barChart id="horizontal" value="#{mainApplicantController.model}"  rendered="#{mainApplicantController.model.series.get(0).getData().size()!=0}"
-                                legendPosition="se" title="#{msgs['main.applicant']}"
-                                orientation="horizontal" datatipFormat="%s" />
+                    <p:barChart id="horizontal" model="#{mainApplicantController.barModel}"
+                                rendered="#{mainApplicantController.hasData}"
+                                style="width:100%;height:400px" />
 
                     <p:dataTable id="applicants"
                                  emptyMessage="#{msgs['no.applicant']}" var="pair"

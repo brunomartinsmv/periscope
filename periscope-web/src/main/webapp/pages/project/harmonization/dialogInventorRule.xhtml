@@ -49,7 +49,7 @@
                                                   'ui-state-highlight' : spa.harmonized ? 
                                                   'harmonized-row' : 'normal-row'}">
                         <p:ajax event="rowSelect" listener="#{inventorHarmonizationController.onSelectInventorFill}" 
-                                update="@this,:#{p:component('panelInventorHarmonized')}" />
+                                update="@this,:#{p:resolveFirstComponentWithId('panelInventorHarmonized', view).clientId}" />
                         <p:column headerText="#{msgs['name']}">#{spa.name}</p:column>
                     </p:dataTable>
                 </h:column>
@@ -62,7 +62,7 @@
                             <li class="#{sug.object.harmonized ? 'harmonized-row' : 'normal-row'}">
                                 <p:selectBooleanCheckbox
                                     onchange="#{inventorHarmonizationController.onSelectInventorSugestion()}" value="#{sug.selected}">
-                                    <p:ajax update="@this, :#{p:component('over')}"/>
+                                    <p:ajax update="@this, :#{p:resolveFirstComponentWithId('over', view).clientId}"/>
                                 </p:selectBooleanCheckbox>
                                 #{sug.object.name}
                             </li>
@@ -93,7 +93,7 @@
                                          else {
                                              return true;
                                          }"
-                                 update=":#{p:component('selectedInventors')}"/>
+                                 update=":#{p:resolveFirstComponentWithId('selectedInventors', view).clientId}"/>
 
                 <p:commandButton value="#{msgs['cancel']}" immediate="true"
                                  oncomplete="invSugestionsDialog.hide()" />

@@ -45,14 +45,6 @@
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
         </dependency>
-        <!-- ChartSeries shims; UI charts still need PF types only in web.
-             Keep classifier jakarta temporarily for any leftover PF refs. -->
-        <dependency>
-            <groupId>org.primefaces</groupId>
-            <artifactId>primefaces</artifactId>
-            <classifier>jakarta</classifier>
-        </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>

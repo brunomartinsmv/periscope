@@ -18,10 +18,11 @@
                 
                 <h:panelGrid columns="1" id="tudo" styleClass="container" >
 
-                    <p:barChart id="horizontal" value="#{stateDistribuitionController.model}" rendered="#{stateDistribuitionController.model.series.get(0).getData().size()!=0}"
-                                orientation="horizontal" legendPosition="se" datatipFormat="%s"
-                                style="#{stateDistribuitionController.chartStyle}"
-                                title="#{msgs['patents.state']}" />
+                    <p:outputLabel value="#{msgs['empty']}" rendered="#{stateDistribuitionController.chartEmpty}" />
+
+                    <p:barChart id="horizontal" model="#{stateDistribuitionController.barModel}"
+                                rendered="#{stateDistribuitionController.hasData}"
+                                style="#{stateDistribuitionController.chartStyle};width:100%" />
                     <p:dataTable id="states"
                                  emptyMessage="#{msgs['no.brazilian']}" var="pair"
                                  value="#{stateDistribuitionController.pairs}">

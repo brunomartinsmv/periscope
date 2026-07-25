@@ -102,7 +102,7 @@
                         </p:column>		
                         <p:column>
                             <p:commandButton icon="ui-icon-closethick" action="#{inventorHarmonizationController.unselect(pa)}"
-                                             partialSubmit="true" process=":#{p:component('formAll')}" immediate="true"
+                                             partialSubmit="true" process=":#{p:resolveFirstComponentWithId('formAll', view).clientId}" immediate="true"
                                              update = ":formAll:inventors,:formAll:selectedInventors,
                                              :formAll:updateRule"
                                              ajax="true"

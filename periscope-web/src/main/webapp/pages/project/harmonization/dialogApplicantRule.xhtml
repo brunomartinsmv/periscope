@@ -59,7 +59,7 @@
                                                   'ui-state-highlight' : spa.harmonized ? 
                                                   'harmonized-row' : 'normal-row'}">
                         <p:ajax event="rowSelect" listener="#{applicantHarmonizationController.onSelectApplicantFill}" 
-                                update="@this,:#{p:component('panelApplicantHarmonized')}" />
+                                update="@this,:#{p:resolveFirstComponentWithId('panelApplicantHarmonized', view).clientId}" />
                         <p:column headerText="#{msgs['name']}">#{spa.name}</p:column>
                     </p:dataTable>
                 </h:column>
@@ -72,7 +72,7 @@
                             <li class="#{sug.object.harmonized ? 'harmonized-row' : 'normal-row'}">
                                 <p:selectBooleanCheckbox
                                     onchange="#{applicantHarmonizationController.onSelectApplicantSugestion()}" value="#{sug.selected}" >
-                                    <p:ajax event="change" update="@this, :#{p:component('over')}"/>
+                                    <p:ajax event="change" update="@this, :#{p:resolveFirstComponentWithId('over', view).clientId}"/>
                                 </p:selectBooleanCheckbox>
                                 #{sug.object.name}
                             </li>
@@ -103,7 +103,7 @@
                                          else {
                                              return true;
                                          }"
-                                 update=":#{p:component('selectedApplicants')}"/>
+                                 update=":#{p:resolveFirstComponentWithId('selectedApplicants', view).clientId}"/>
                 <p:commandButton value="#{msgs['cancel']}" immediate="true"
                                  oncomplete="sugestionsDialog.hide()" />
             </center>

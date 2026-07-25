@@ -1,0 +1,40 @@
+# Synced by the Repository Settings GitHub App (https://github.com/apps/settings)
+# when installed on this repository. Safe to keep as source of truth either way.
+
+repository:
+  # Short description shown on the GitHub repository page
+  description: >-
+    Patent analysis and name-harmonization web app (UFMT). Assists the Brazilian
+    community in using Industrial Property System data — Jakarta EE 10 / WildFly,
+    MongoDB (Morphia), Lucene Fast-Join, REST API + React SPA (JSF fallback).
+
+  # Homepage (docs / app); leave blank if none
+  # homepage: https://github.com/brunomartinsmv/periscope
+
+  # Topics shown on the repository page (comma-separated or YAML list)
+  topics:
+    - patents
+    - patent-analysis
+    - industrial-property
+    - jakarta-ee
+    - wildfly
+    - java
+    - mongodb
+    - morphia
+    - lucene
+    - react
+    - typescript
+    - jsf
+    - primefaces
+    - rest-api
+    - ufmt
+
+  default_branch: master
+  has_issues: true
+  has_projects: true
+  has_wiki: true
+  has_downloads: true
+  allow_merge_commit: true
+  allow_squash_merge: true
+  allow_rebase_merge: true
+  delete_branch_on_merge: true

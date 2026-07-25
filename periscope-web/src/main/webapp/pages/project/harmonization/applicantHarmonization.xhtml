@@ -38,7 +38,7 @@
                     <p:selectBooleanCheckbox id="campo" 
                                              value="#{pa.selected}" >
                         <p:ajax event="change" update=":tabView:formAll:selectedApplicants,@this,:tabView:formAll:newRule,
-                                :#{p:component('panelSugestions')}" 
+                                :#{p:resolveFirstComponentWithId('panelSugestions', view).clientId}" 
                                 listener="#{applicantHarmonizationController.onSelectApplicant(pa)}"/>
                     </p:selectBooleanCheckbox>	
                 </p:column>			
@@ -56,7 +56,8 @@
                 </p:column>
                 <p:column headerText="#{msgs['actions']}" >
                     <center>
-                        <p:commandLink id="showDocs" value="#{msgs['show.docs']}" update=":tabView:formAll:applicantDocs"
+                        <p:commandLink id="showDocs" value="#{msgs['show.docs']}"
+                                       update=":#{p:resolveFirstComponentWithId('applicantDocs', view).clientId}"
                                        oncomplete="applicantDocsDialog.show()" 
                                        action="#{applicantHarmonizationController.loadDocs(pa.name)}"
                                        style="color:white;margin-right: 10px" styleClass="btn btn-inverse"/>			
@@ -107,7 +108,7 @@
                 <p:column>
                     <p:commandButton icon="ui-icon-closethick" action="#{applicantHarmonizationController.unselect(pa)}"
                                      update = ":tabView:formAll:applicants,:tabView:formAll:selectedApplicants,
-                                     :tabView:formAll:newRule, :#{p:component('panelSugestions')}"
+                                     :tabView:formAll:newRule, :#{p:resolveFirstComponentWithId('panelSugestions', view).clientId}"
                                      ajax="true"
 
                                      />

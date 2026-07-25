@@ -112,7 +112,7 @@
                         </p:column>		
                         <p:column>
                             <p:commandButton icon="ui-icon-closethick" action="#{applicantHarmonizationController.unselect(pa)}"
-                                             partialSubmit="true" process=":#{p:component('formAll')}" immediate="true"
+                                             partialSubmit="true" process=":#{p:resolveFirstComponentWithId('formAll', view).clientId}" immediate="true"
                                              update = ":formAll:applicants,:formAll:selectedApplicants,
                                              :formAll:updateRule"
                                              ajax="true"

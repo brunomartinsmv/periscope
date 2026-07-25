@@ -32,8 +32,8 @@
                     </h:panelGrid>
                     <p:spacer height="25"/>
                     <center>
-                        <p:commandButton  value="#{msgs['add']}" update=":#{p:component('inventors')},panel" class="btn-info"
-                                          partialSubmit="true" process=":#{p:component('insertInventor')}" action="#{patentController.createNewInventor()}" 
+                        <p:commandButton  value="#{msgs['add']}" update=":#{p:resolveFirstComponentWithId('inventors', view).clientId},panel" class="btn-info"
+                                          partialSubmit="true" process=":#{p:resolveFirstComponentWithId('insertInventor', view).clientId}" action="#{patentController.createNewInventor()}" 
                                           oncomplete="inventorAddDialog.hide()" />
                     </center>
 
@@ -53,8 +53,8 @@
                     </h:panelGrid>
                     <p:spacer height="25"/>
                     <center>
-                        <p:commandButton value="#{msgs['add']}" update=":#{p:component('applicants')},panelApplicant" class="btn-info"
-                                         partialSubmit="true" process=":#{p:component('insertApplicant')}" 
+                        <p:commandButton value="#{msgs['add']}" update=":#{p:resolveFirstComponentWithId('applicants', view).clientId},panelApplicant" class="btn-info"
+                                         partialSubmit="true" process=":#{p:resolveFirstComponentWithId('insertApplicant', view).clientId}" 
                                          action="#{patentController.createNewApplicant()}" oncomplete="applicantAddDialog.hide()"/>
                     </center>
 
@@ -76,13 +76,13 @@
                     </h:panelGrid>
                     <p:spacer height="25"/>
                     <center>
-                        <p:commandButton value="#{msgs['add']}" update=":#{p:component('prioridades')},panelPriority" class="btn-info"
-                                         partialSubmit="true" process=":#{p:component('insertPriority')}" action="#{patentController.addPriority()}" 
+                        <p:commandButton value="#{msgs['add']}" update=":#{p:resolveFirstComponentWithId('prioridades', view).clientId},panelPriority" class="btn-info"
+                                         partialSubmit="true" process=":#{p:resolveFirstComponentWithId('insertPriority', view).clientId}" action="#{patentController.addPriority()}" 
                                          onclick="priorityAddDialog.hide()"/>
                     </center>
                 </p:dialog>
             </h:form>
-            <h:form style="width: 100%">
+            <h:form style="width: 100%" id="patentForm" enctype="multipart/form-data">
                 <p:fieldset  toggleable="true" toggleSpeed="500" legend="#{msgs['header']}" style="width: 97%">
                     <p:messages autoUpdate="true"/>
                     <h:panelGrid border="0" columns="2" style="width: 100%" columnClasses="panelHalf,panelHalf">
@@ -128,8 +128,8 @@
                                 <p:column headerText="#{msgs['action']}" style="width: 10%;">
                                     <center>
                                         <p:commandButton value="#{msgs['delete']}" class="btn-danger"
-                                                         update=":#{p:component('prioridades')}" partialSubmit="true" 
-                                                         process=":#{p:component('prioridades')}"
+                                                         update=":#{p:resolveFirstComponentWithId('prioridades', view).clientId}" partialSubmit="true" 
+                                                         process=":#{p:resolveFirstComponentWithId('prioridades', view).clientId}"
                                                          action="#{patentController.deletePriority(prioridade)}"/>
                                     </center>
                                 </p:column>
@@ -162,8 +162,8 @@
                             <p:column headerText="#{msgs['action']}" style="width: 10%">
                                 <center>
                                     <p:commandButton value="#{msgs['unlink']}" class="btn-warning"
-                                                     update=":#{p:component('applicants')}" partialSubmit="true" 
-                                                     process=":#{p:component('applicants')}"
+                                                     update=":#{p:resolveFirstComponentWithId('applicants', view).clientId}" partialSubmit="true" 
+                                                     process=":#{p:resolveFirstComponentWithId('applicants', view).clientId}"
                                                      action="#{patentController.deleteApplicant(applicant)}"/>
                                 </center>
                             </p:column>
@@ -187,8 +187,8 @@
                             <p:column headerText="#{msgs['action']}" style="width: 10%">	
                                 <center>
                                     <p:commandButton id="linkApplicant" value="#{msgs['link']}" class="btn-success"
-                                                     update=":#{p:component('applicants')}" partialSubmit="true" 
-                                                     process=":#{p:component('applicants')}"
+                                                     update=":#{p:resolveFirstComponentWithId('applicants', view).clientId}" partialSubmit="true" 
+                                                     process=":#{p:resolveFirstComponentWithId('applicants', view).clientId}"
                                                      action="#{patentController.addApplicant(ap)}"/>
                                     <p:tooltip for="linkApplicant">
                                         <p:outputLabel value="Clique para vincular esse depositante à nova patente." escape="false"/>
@@ -225,8 +225,8 @@
                             <p:column headerText="#{msgs['action']}" style="width: 10%">
                                 <center>
                                     <p:commandButton value="#{msgs['unlink']}" class="btn-warning"
-                                                     update=":#{p:component('inventors')}" partialSubmit="true" 
-                                                     process=":#{p:component('inventors')}" 
+                                                     update=":#{p:resolveFirstComponentWithId('inventors', view).clientId}" partialSubmit="true" 
+                                                     process=":#{p:resolveFirstComponentWithId('inventors', view).clientId}" 
                                                      action="#{patentController.deleteInventor(inventor)}"/>
                                 </center>
                             </p:column>
@@ -251,8 +251,8 @@
                             <p:column headerText="#{msgs['action']}" style="width: 10%">
                                 <center>
                                     <p:commandButton id="linkInventor" value="#{msgs['link']}" class="btn-success"
-                                                     update=":#{p:component('inventors')},addInventors" 
-                                                     partialSubmit="true" process=":#{p:component('inventors')}" 
+                                                     update=":#{p:resolveFirstComponentWithId('inventors', view).clientId},addInventors" 
+                                                     partialSubmit="true" process=":#{p:resolveFirstComponentWithId('inventors', view).clientId}" 
                                                      action="#{patentController.addInventor(inv)}"/>
                                     <p:tooltip for="linkInventor">
                                         <p:outputLabel value="Clique para vincular esse inventor à nova patente." escape="false"/>
@@ -299,12 +299,12 @@
                     </h:panelGrid>
                     <center>
                         <h:panelGrid id="panelUploadPresentation" columns="1">
-                            <p:fileUpload fileUploadListener="#{patentController.uploadPresentationFile}" 
+                            <p:fileUpload listener="#{patentController.uploadPresentationFile}" 
                                           mode="advanced" dragDropSupport="false" auto="true"
-                                          sizeLimit="100000" multiple="false" label="#{msgs['choose.file']}"
+                                          sizeLimit="52428800" multiple="false" label="#{msgs['choose.file']}"
                                           update="panelUploadPresentation,panelButtonPresentation,panelInfoPresentation,messages1"
                                           rendered="#{patentController.temporaryPresentationFile == null}"
-                                          showButtons="false" allowTypes="/(\.|\/)(gif|jpeg|png|pdf)$/" />  
+                                          allowTypes="/(\.|\/)(gif|jpe?g|png|pdf)$/" />  
                             <p:growl id="messages1" showDetail="true"/>
                         </h:panelGrid>
 
@@ -341,11 +341,11 @@
                     </h:panelGrid>
                     <center>
                         <h:panelGrid id="panelUploadFile">
-                            <p:fileUpload fileUploadListener="#{patentController.uploadPatentInfo}" 
+                            <p:fileUpload listener="#{patentController.uploadPatentInfo}" 
                                           mode="advanced" dragDropSupport="false" auto="true"
                                           update="panelUploadFile,panelInfoFile,panelButtonFile,messages2"
                                           rendered="#{patentController.temporaryPatentInfo == null}"
-                                          sizeLimit="5000000" showButtons="false" label="#{msgs['choose.file']}"
+                                          sizeLimit="52428800" label="#{msgs['choose.file']}"
                                           allowTypes="/(\.|\/)(doc|docx|odt|pdf|txt)$/" />  
 
                             <p:growl id="messages2" showDetail="true"/>

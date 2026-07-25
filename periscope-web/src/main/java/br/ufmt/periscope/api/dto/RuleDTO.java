@@ -14,7 +14,12 @@ public record RuleDTO(
         String nature,
         String projectId
 ) {
-    public static RuleDTO from(Rule rule) {
+    /**
+     * Maps a rule using an explicit project id — preferred for list endpoints
+     * so Morphia never has to resolve {@code Rule.project} (@Reference) when
+     * list projections omit that field.
+     */
+    public static RuleDTO from(Rule rule, String projectId) {
         if (rule == null) {
             return null;
         }
@@ -27,8 +32,24 @@ public record RuleDTO(
                 rule.getSubstitutions(),
                 rule.getCountry() != null ? rule.getCountry().getAcronym() : null,
                 rule.getNature() != null ? rule.getNature().getName() : null,
-                rule.getProject() != null && rule.getProject().getId() != null
-                        ? rule.getProject().getId().toString() : null
+                projectId
         );
+    }
+
+    /**
+     * Prefer {@link #from(Rule, String)} when the project id is already known
+     * (list/create paths). This overload only reads {@code project} if a stub
+     * with id was already set — it is not safe on a Morphia-lazy reference
+     * while another cursor is open / when projections omit {@code project}.
+     */
+    public static RuleDTO from(Rule rule) {
+        if (rule == null) {
+            return null;
+        }
+        String projectId = null;
+        if (rule.getProject() != null && rule.getProject().getId() != null) {
+            projectId = rule.getProject().getId().toString();
+        }
+        return from(rule, projectId);
     }
 }
