@@ -26,12 +26,17 @@ import jakarta.ws.rs.core.SecurityContext;
 import java.net.URI;
 import java.util.Date;
 import java.util.List;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 @Path("/projects")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
 @RolesAllowed({"ADMIN", "USER"})
+@Tag(name = "Projects")
+@SecurityRequirement(name = "bearerAuth")
 public class ProjectResource {
 
     @Inject
@@ -44,6 +49,7 @@ public class ProjectResource {
     private ApiSecuritySupport securitySupport;
 
     @GET
+    @Operation(summary = "Listar projetos")
     public List<ProjectDTO> list(@Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         return projectRepository.getProjectList(user).stream()
@@ -53,6 +59,7 @@ public class ProjectResource {
 
     @GET
     @Path("/{id}")
+    @Operation(summary = "Obter projeto")
     public ProjectDTO get(@PathParam("id") String id, @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         Project project = securitySupport.requireProject(id, user);
@@ -60,6 +67,7 @@ public class ProjectResource {
     }
 
     @POST
+    @Operation(summary = "Criar projeto")
     public Response create(ProjectRequest request, @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         if (request == null || request.title() == null || request.title().isBlank()) {
@@ -81,6 +89,7 @@ public class ProjectResource {
 
     @PUT
     @Path("/{id}")
+    @Operation(summary = "Atualizar projeto")
     public ProjectDTO update(@PathParam("id") String id, ProjectRequest request,
                              @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
@@ -104,6 +113,7 @@ public class ProjectResource {
 
     @DELETE
     @Path("/{id}")
+    @Operation(summary = "Excluir projeto")
     public Response delete(@PathParam("id") String id, @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         Project project = securitySupport.requireProject(id, user);

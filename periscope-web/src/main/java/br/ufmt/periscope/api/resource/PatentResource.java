@@ -30,11 +30,17 @@ import org.bson.types.ObjectId;
 
 import static dev.morphia.query.filters.Filters.eq;
 
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
 @Path("/patents")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
 @RolesAllowed({"ADMIN", "USER"})
+@Tag(name = "Patents")
+@SecurityRequirement(name = "bearerAuth")
 public class PatentResource {
 
     @Inject
@@ -48,6 +54,7 @@ public class PatentResource {
 
     @GET
     @Path("/{id}")
+    @Operation(summary = "Obter patente")
     public PatentDTO get(@PathParam("id") String id, @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         LoadedPatent loaded = findPatent(id);
@@ -57,6 +64,7 @@ public class PatentResource {
 
     @PUT
     @Path("/{id}")
+    @Operation(summary = "Atualizar patente")
     public PatentDTO update(@PathParam("id") String id, PatentUpdateRequest request,
                             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
@@ -88,6 +96,7 @@ public class PatentResource {
 
     @DELETE
     @Path("/{id}")
+    @Operation(summary = "Excluir patente")
     public Response delete(@PathParam("id") String id, @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         LoadedPatent loaded = findPatent(id);

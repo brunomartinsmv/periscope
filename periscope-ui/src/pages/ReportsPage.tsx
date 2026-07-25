@@ -59,6 +59,7 @@ export function ReportsPage() {
           <label htmlFor="report">Relatório</label>
           <select
             id="report"
+            data-testid="report-select"
             value={report}
             onChange={(e) => setReport(e.target.value as ReportName)}
           >
@@ -84,7 +85,7 @@ export function ReportsPage() {
 
       {reportQuery.data && (
         <>
-          <div className="card">
+          <div className="card" data-testid="report-chart">
             <h2>{reportQuery.data.label || REPORTS.find((r) => r.value === report)?.label}</h2>
             {chartData.length === 0 ? (
               <div className="empty-block">Sem dados para este relatório.</div>
@@ -113,7 +114,7 @@ export function ReportsPage() {
             )}
           </div>
 
-          <div className="card">
+          <div className="card" data-testid="report-table">
             <h2>Tabela</h2>
             {chartData.length === 0 ? (
               <div className="empty-block">Sem itens.</div>

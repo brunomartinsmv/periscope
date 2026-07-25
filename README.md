@@ -85,6 +85,19 @@ Base: `http://localhost:8080/periscope/rest`
 - Demais endpoints exigem `Authorization: Bearer <token>`
 - Documentação completa: [docs/modernization/fase-07-spa.md](docs/modernization/fase-07-spa.md)
 
+### OpenAPI 3
+
+Documento gerado pelo MicroProfile OpenAPI (WildFly smallrye), na raiz do host:
+
+```bash
+# Uma vez por instalação WildFly (parar o servidor antes):
+JBOSS_HOME=/opt/jboss/wildfly-34.0.1.Final ./tools/enable-wildfly-openapi.sh
+# (reinicie o WildFly após habilitar)
+
+curl -s http://localhost:8080/openapi
+# JSON: curl -s -H 'Accept: application/json' http://localhost:8080/openapi
+```
+
 Exemplo:
 
 ```bash
@@ -118,6 +131,40 @@ cp periscope-web/target/periscope.war /opt/jboss/wildfly-34.0.1.Final/standalone
 ```
 
 Detalhes: [periscope-ui/README.md](periscope-ui/README.md) e [docs/modernization/fase-07-spa.md](docs/modernization/fase-07-spa.md).
+
+## Testes
+
+```bash
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+
+# Unitários Maven (~32 testes)
+mvn -B clean verify
+
+# Integração (Testcontainers MongoDB 7; skip sem Docker)
+mvn -B verify -Pit
+
+# Frontend
+cd periscope-ui && npm ci && npm run lint && npm run build
+
+# E2E Playwright (requer WildFly + Mongo + SPA em /periscope/app/)
+npx playwright install --with-deps chromium
+npm run test:e2e
+# override: E2E_BASE_URL=http://localhost:5173/periscope/app/ npm run test:e2e
+```
+
+## CI
+
+Workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+| Job | Quando | O que faz |
+|-----|--------|-----------|
+| `build` | push/PR | `mvn -B clean verify` |
+| `integration` | push/PR | `mvn -B verify -Pit` |
+| `frontend` | push/PR | `npm ci` + lint + build em `periscope-ui` |
+| `dependency-check` | push/PR | OWASP (não bloqueante) |
+| `e2e` | `workflow_dispatch` | Playwright (WildFly+Mongo; desabilitado no push) |
+
+Template inerte de homologação: [`.github/workflows/deploy-staging.yml`](.github/workflows/deploy-staging.yml).
 
 ## Context root
 

@@ -37,8 +37,6 @@ public class ProjectRepository {
     public List<Project> getProjectList(User user) {
         FindOptions options = new FindOptions()
                 .sort(dev.morphia.query.Sort.ascending("title"));
-        options.projection().exclude("patents");
-
         if (user.getUserLevel().getAccessLevel() != 10) {
             return ds.find(Project.class)
                     .filter(or(

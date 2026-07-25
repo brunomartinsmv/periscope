@@ -29,11 +29,25 @@ ENV MONGODB_URI=mongodb://mongodb:27017 \
 USER root
 RUN mkdir -p /opt/periscope \
     && chown -R jboss:jboss /opt/periscope
+# Enable MicroProfile OpenAPI via jboss-cli embed-server (no python3).
+# Idempotent try/catch: add extension/subsystem only when missing.
+# Real :add failures still fail the build (CLI non-zero).
 USER jboss
+RUN /opt/jboss/wildfly/bin/jboss-cli.sh --commands='\
+embed-server --server-config=standalone.xml,\
+try,/extension=org.wildfly.extension.microprofile.openapi-smallrye:read-resource,\
+catch,/extension=org.wildfly.extension.microprofile.openapi-smallrye:add,\
+finally,end-try,\
+try,/subsystem=microprofile-openapi-smallrye:read-resource,\
+catch,/subsystem=microprofile-openapi-smallrye:add,\
+finally,end-try,\
+stop-embedded-server'
 
+USER root
 COPY --from=build --chown=jboss:jboss \
     /app/periscope-web/target/periscope.war \
     /opt/jboss/wildfly/standalone/deployments/periscope.war
+USER jboss
 
 EXPOSE 8080
 

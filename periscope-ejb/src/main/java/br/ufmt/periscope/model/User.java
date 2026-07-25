@@ -20,7 +20,11 @@ public class User implements Serializable {
     private String lastname;
     private String email;
     private UserLevel userLevel;
-    @Reference
+    /**
+     * Lazy on purpose: this is the inverse of {@code Project.owner}/{@code Project.observers},
+     * so eager resolution would make Morphia loop between user and project documents.
+     */
+    @Reference(lazy = true)
     private List<Project> projects = new ArrayList<Project>();
 
     public ObjectId getId() {

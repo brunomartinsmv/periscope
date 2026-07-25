@@ -34,6 +34,21 @@ Login padrão: `admin` / `123456`.
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier (write) |
 | `npm run preview` | Preview do build local |
+| `npm run test:e2e` | Playwright E2E (default `http://localhost:8080/periscope/app/`) |
+| `npm run test:e2e:ui` | Playwright UI mode |
+
+## E2E (Playwright)
+
+Requer backend WildFly + MongoDB e a SPA acessível (WAR ou `npm run dev`).
+
+```bash
+npx playwright install --with-deps chromium
+npm run test:e2e
+# Dev server:
+E2E_BASE_URL=http://localhost:5173/periscope/app/ npm run test:e2e
+```
+
+Specs em `e2e/`: login, projects, patents, reports, harmonization.
 
 ## Variáveis de ambiente
 

@@ -54,6 +54,7 @@ export function LoginPage() {
             <input
               id="username"
               name="username"
+              data-testid="login-username"
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -66,13 +67,14 @@ export function LoginPage() {
               id="password"
               name="password"
               type="password"
+              data-testid="login-password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          <button type="submit" className="btn" disabled={submitting}>
+          <button type="submit" className="btn" data-testid="login-submit" disabled={submitting}>
             {submitting ? 'Entrando…' : 'Entrar'}
           </button>
         </div>

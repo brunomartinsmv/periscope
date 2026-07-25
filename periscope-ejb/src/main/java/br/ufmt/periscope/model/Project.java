@@ -28,9 +28,17 @@ public class Project implements Serializable {
     private User owner;
     @Reference
     private List<User> observers = new ArrayList<User>();
-    @Reference
+    /**
+     * Lazy on purpose: {@code Rule.project} and {@code Patent.project} point back to this
+     * entity, so eager resolution of these collections makes Morphia recurse through the
+     * cycle, opening one nested cursor (and holding one pooled connection) per level until
+     * the MongoDB connection pool is exhausted. Loading a project also must not drag in
+     * every patent it owns. {@code size()}/{@code isEmpty()} are answered from the stored
+     * ids without hitting the database.
+     */
+    @Reference(lazy = true)
     private List<Rule> rules = new ArrayList<Rule>();
-    @Reference
+    @Reference(lazy = true)
     private List<Patent> patents = new ArrayList<Patent>();
 
     public ObjectId getId() {

@@ -23,6 +23,9 @@ import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.util.List;
 import org.bson.types.ObjectId;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import static dev.morphia.query.filters.Filters.eq;
 
@@ -31,12 +34,15 @@ import static dev.morphia.query.filters.Filters.eq;
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
 @RolesAllowed("ADMIN")
+@Tag(name = "Users")
+@SecurityRequirement(name = "bearerAuth")
 public class UserResource {
 
     @Inject
     private Datastore ds;
 
     @GET
+    @Operation(summary = "Listar usuários")
     public List<UserDTO> list() {
         return ds.find(User.class).iterator().toList().stream()
                 .map(UserDTO::from)
@@ -45,11 +51,13 @@ public class UserResource {
 
     @GET
     @Path("/{id}")
+    @Operation(summary = "Obter usuário")
     public UserDTO get(@PathParam("id") String id) {
         return UserDTO.from(find(id));
     }
 
     @POST
+    @Operation(summary = "Criar usuário")
     public Response create(UserRequest request) {
         validateCreate(request);
         User existing = ds.find(User.class).filter(eq("username", request.username().trim())).first();
@@ -66,6 +74,7 @@ public class UserResource {
 
     @PUT
     @Path("/{id}")
+    @Operation(summary = "Atualizar usuário")
     public UserDTO update(@PathParam("id") String id, UserRequest request) {
         if (request == null) {
             throw ApiException.badRequest("Body is required");
@@ -85,6 +94,7 @@ public class UserResource {
 
     @DELETE
     @Path("/{id}")
+    @Operation(summary = "Excluir usuário")
     public Response delete(@PathParam("id") String id) {
         User user = find(id);
         ds.delete(user);
