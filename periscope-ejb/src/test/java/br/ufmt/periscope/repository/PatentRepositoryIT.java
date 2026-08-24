@@ -106,7 +106,8 @@ class PatentRepositoryIT {
                 .filter(eq("publicationNumber", "BRIT0001"))
                 .first();
         assertThat(foundPatent).isNotNull();
-        assertThat(foundPatent.getTitleSelect()).isEqualTo("Integration Test Patent");
+        // Patent#getTitleSelect / #setTitleSelect normalise to uppercase (harmonisation).
+        assertThat(foundPatent.getTitleSelect()).isEqualTo("INTEGRATION TEST PATENT");
         assertThat(foundPatent.getProject()).isNotNull();
         assertThat(foundPatent.getProject().getTitle()).isEqualTo("IT Project");
     }

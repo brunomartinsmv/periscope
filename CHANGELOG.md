@@ -54,6 +54,8 @@ Morphia 2, Lucene 9, PDFBox 3, POI 5, PrimeFaces 14).
 
 ### Fixed
 
+- `PatentRepositoryIT` esperava o título original; `Patent#getTitleSelect` /
+  `#setTitleSelect` normalizam para maiúsculas (contrato de harmonização).
 - Ciclo de `@Reference` Morphia (`Project.patents` ↔ `Patent.project`) que esgotava o
   pool de conexões do MongoDB ao abrir um projeto na UI JSF; coleções cíclicas passam a
   ser `@Reference(lazy = true)` — PR #15.
