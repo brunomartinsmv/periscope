@@ -20,7 +20,7 @@ Estabelecer **pipeline de qualidade**, **testes automatizados**, **OpenAPI** e *
 | `build` | `mvn -B clean verify` | Unitários (sem Docker/Mongo) |
 | `integration` | `mvn -B verify -Pit` | Testcontainers (`mongo:7`); Docker no Actions |
 | `frontend` | `npm ci && npm run lint && npm run build` | Node 22 em `periscope-ui/` (Fase 8b) |
-| `dependency-check` | `mvn org.owasp:dependency-check-maven:check -DossindexAnalyzerEnabled=false` | `continue-on-error: true` + artifact; NVD only |
+| `dependency-check` | `mvn -DskipTests install org.owasp:dependency-check-maven:check -DossindexAnalyzerEnabled=false` | `continue-on-error: true` + artifact; NVD only |
 | `e2e` | Playwright | **Só** `workflow_dispatch` (precisa WildFly+Mongo) |
 
 Triggers: `push` / `pull_request` em `master` + `workflow_dispatch`.
@@ -56,6 +56,8 @@ mvn -B clean verify -Pit     # + ITs (skip se sem Docker)
 `dependency-check-maven` **11.x** em `pluginManagement` (execução manual/CI, **fora** do ciclo padrão).
 OSS Index desligado (`ossindexAnalyzerEnabled=false`): a API da Sonatype exige token
 desde 2025 e o runner não tem credencial; a fonte de CVE continua sendo o NVD.
+O job CI faz `mvn -DskipTests install` antes do `check` para o módulo web resolver
+o artefato irmão `periscope-ejb`.
 
 ### 8.7 Cobertura
 
