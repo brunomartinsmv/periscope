@@ -56,6 +56,8 @@ Morphia 2, Lucene 9, PDFBox 3, POI 5, PrimeFaces 14).
 
 - `PatentRepositoryIT` esperava o título original; `Patent#getTitleSelect` /
   `#setTitleSelect` normalizam para maiúsculas (contrato de harmonização).
+- Job OWASP do CI falhava com HTTP 401 no Sonatype OSS Index (API autenticada
+  desde 2025). Analisador OSS Index desligado; a varredura segue pelo NVD.
 - Ciclo de `@Reference` Morphia (`Project.patents` ↔ `Patent.project`) que esgotava o
   pool de conexões do MongoDB ao abrir um projeto na UI JSF; coleções cíclicas passam a
   ser `@Reference(lazy = true)` — PR #15.

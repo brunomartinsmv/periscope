@@ -67,7 +67,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Run dependency-check
-        run: mvn -B org.owasp:dependency-check-maven:check
+        # OSS Index is anonymous-401 since 2025; disable it (NVD still runs). See pom.xml.
+        run: mvn -B org.owasp:dependency-check-maven:check -DossindexAnalyzerEnabled=false
       - name: Upload dependency-check report
         if: always()
         uses: actions/upload-artifact@v4
