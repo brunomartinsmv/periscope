@@ -270,6 +270,9 @@
                <version>${dependency-check.version}</version>
                <configuration>
                   <failBuildOnCVSS>11</failBuildOnCVSS>
+                  <!-- OSS Index requires a Sonatype token since 2025; CI has none. NVD remains the source. -->
+                  <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
+                  <ossIndexWarnOnlyOnRemoteErrors>true</ossIndexWarnOnlyOnRemoteErrors>
                   <formats>
                      <format>HTML</format>
                      <format>JSON</format>

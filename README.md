@@ -196,7 +196,7 @@ Workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 | `build` | push/PR | `mvn -B clean verify` |
 | `integration` | push/PR | `mvn -B verify -Pit` |
 | `frontend` | push/PR | `npm ci` + lint + build em `periscope-ui` |
-| `dependency-check` | push/PR | OWASP (não bloqueante) |
+| `dependency-check` | push/PR | OWASP / NVD (não bloqueante; OSS Index desligado) |
 | `e2e` | `workflow_dispatch` | Playwright (WildFly+Mongo; desabilitado no push) |
 
 Template inerte de homologação: [`.github/workflows/deploy-staging.yml`](.github/workflows/deploy-staging.yml).
