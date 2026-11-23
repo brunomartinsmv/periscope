@@ -17,8 +17,8 @@ export function refresh(): Promise<LoginResponse> {
   return apiRequest<LoginResponse>('/auth/refresh', { method: 'POST' });
 }
 
-export function changePassword(data: ChangePasswordRequest): Promise<User> {
-  return apiRequest<User>('/auth/change-password', { method: 'POST', body: data });
+export function changePassword(data: ChangePasswordRequest): Promise<LoginResponse> {
+  return apiRequest<LoginResponse>('/auth/change-password', { method: 'POST', body: data });
 }
 
 export function logout(): Promise<void> {

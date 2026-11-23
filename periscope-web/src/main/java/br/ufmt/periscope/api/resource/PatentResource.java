@@ -71,7 +71,7 @@ public class PatentResource {
                             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         LoadedPatent loaded = findPatent(id);
-        securitySupport.requireProject(loaded.projectId(), user);
+        securitySupport.requireProjectManager(loaded.projectId(), user);
         if (request == null) {
             throw ApiException.badRequest("Body is required");
         }
@@ -111,7 +111,7 @@ public class PatentResource {
     public Response delete(@PathParam("id") String id, @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         LoadedPatent loaded = findPatent(id);
-        Project project = securitySupport.requireProject(loaded.projectId(), user);
+        Project project = securitySupport.requireProjectManager(loaded.projectId(), user);
         if (project.getPatents() != null) {
             ObjectId oid = loaded.patent().getId();
             project.getPatents().removeIf(p -> p.getId() != null && p.getId().equals(oid));

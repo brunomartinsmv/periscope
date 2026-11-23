@@ -23,11 +23,13 @@ import org.bson.Document;
 public class TokenRevocationStore {
 
     private static final String COLLECTION = "revoked_tokens";
+    private static final String USER_VERSIONS_COLLECTION = "revoked_token_versions";
 
     @Inject
     private Instance<Datastore> datastoreInstance;
 
     private final ConcurrentHashMap<String, Long> revokedMemory = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> minUserVersionMemory = new ConcurrentHashMap<>();
     private volatile boolean ttlIndexEnsured = false;
 
     public void revoke(String jti, long expEpochSeconds) {
@@ -78,18 +80,67 @@ public class TokenRevocationStore {
         return false;
     }
 
+    public void revokeAllForUserBeforeVersion(String username, long minValidVersion) {
+        if (username == null || username.isBlank() || minValidVersion <= 0L) {
+            return;
+        }
+        minUserVersionMemory.merge(username, minValidVersion, Math::max);
+        MongoCollection<Document> coll = mongoCollection(USER_VERSIONS_COLLECTION);
+        if (coll != null) {
+            try {
+                Document doc = new Document("_id", username)
+                        .append("minTokenVersion", minValidVersion)
+                        .append("updatedAt", new Date());
+                coll.replaceOne(Filters.eq("_id", username), doc, new ReplaceOptions().upsert(true));
+            } catch (RuntimeException ignored) {
+                // In-memory revocation still protects the current instance
+            }
+        }
+    }
+
+    public boolean isVersionRevoked(String username, long tokenVersion) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        Long memMin = minUserVersionMemory.get(username);
+        if (memMin != null && tokenVersion < memMin) {
+            return true;
+        }
+        MongoCollection<Document> coll = mongoCollection(USER_VERSIONS_COLLECTION);
+        if (coll != null) {
+            try {
+                Document found = coll.find(Filters.eq("_id", username)).first();
+                if (found != null) {
+                    Object raw = found.get("minTokenVersion");
+                    if (raw instanceof Number n) {
+                        long dbMin = n.longValue();
+                        minUserVersionMemory.merge(username, dbMin, Math::max);
+                        return tokenVersion < dbMin;
+                    }
+                }
+            } catch (RuntimeException ignored) {
+                // Ignore transient DB lookup failures
+            }
+        }
+        return false;
+    }
+
     private void purgeExpiredMemory() {
         long now = Instant.now().getEpochSecond();
         revokedMemory.entrySet().removeIf(e -> e.getValue() <= now);
     }
 
     private MongoCollection<Document> mongoCollection() {
+        return mongoCollection(COLLECTION);
+    }
+
+    private MongoCollection<Document> mongoCollection(String collectionName) {
         if (datastoreInstance == null || datastoreInstance.isUnsatisfied() || datastoreInstance.isAmbiguous()) {
             return null;
         }
         try {
             Datastore ds = datastoreInstance.get();
-            return ds != null ? ds.getDatabase().getCollection(COLLECTION) : null;
+            return ds != null ? ds.getDatabase().getCollection(collectionName) : null;
         } catch (RuntimeException ex) {
             return null;
         }

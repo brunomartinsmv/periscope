@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import * as authApi from '../api/auth';
 import { ErrorAlert, InfoAlert, SuccessAlert } from './Feedback';
 import { Modal } from './Modal';
@@ -8,7 +9,8 @@ import { useI18n } from '../i18n/useI18n';
 import { ApiError } from '../types';
 
 export function AppLayout() {
-  const { user, isAdmin, logout, updateCurrentUser } = useAuth();
+  const { user, isAdmin, logout, updateSession } = useAuth();
+  const queryClient = useQueryClient();
   const { locale, setLocale, t } = useI18n();
   const { id } = useParams();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,7 +61,8 @@ export function AppLayout() {
     setPwSubmitting(true);
     try {
       const updated = await authApi.changePassword({ currentPassword, newPassword });
-      updateCurrentUser(updated);
+      updateSession(updated.token, updated.user);
+      void queryClient.invalidateQueries();
       setPwSuccess(t('password.success'));
       setCurrentPassword('');
       setNewPassword('');

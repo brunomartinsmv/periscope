@@ -92,7 +92,7 @@ class PatentResourceTest {
     @Test
     void createValidatesRejectsConflictAndSavesPatent() {
         when(securitySupport.requireUser(secCtx)).thenReturn(user);
-        when(securitySupport.requireProject(project.getId().toString(), user)).thenReturn(project);
+        when(securitySupport.requireProjectManager(project.getId().toString(), user)).thenReturn(project);
 
         Country br = new Country();
         br.setAcronym("BR");
@@ -159,7 +159,7 @@ class PatentResourceTest {
         when(query.first(any(FindOptions.class))).thenReturn(existing);
 
         when(securitySupport.requireUser(secCtx)).thenReturn(user);
-        when(securitySupport.requireProject(project.getId().toString(), user)).thenReturn(project);
+        when(securitySupport.requireProjectManager(project.getId().toString(), user)).thenReturn(project);
         org.mockito.Mockito.doAnswer(inv -> {
             ((Patent) inv.getArgument(0)).setCompleted(false);
             return null;

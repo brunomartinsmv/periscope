@@ -78,7 +78,12 @@ class HarmonizationResourceTest {
         secCtx = mock(SecurityContext.class);
 
         when(securitySupport.requireUser(secCtx)).thenReturn(user);
-        when(securitySupport.requireProject(project.getId().toString(), user)).thenReturn(project);
+        org.mockito.Mockito.lenient()
+                .when(securitySupport.requireProject(project.getId().toString(), user))
+                .thenReturn(project);
+        org.mockito.Mockito.lenient()
+                .when(securitySupport.requireProjectManager(project.getId().toString(), user))
+                .thenReturn(project);
     }
 
     @Test

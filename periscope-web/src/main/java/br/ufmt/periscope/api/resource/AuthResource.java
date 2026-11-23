@@ -100,9 +100,13 @@ public class AuthResource {
     @POST
     @Path("/change-password")
     @RolesAllowed({"ADMIN", "USER"})
-    @Operation(summary = "Alterar senha do usuário logado")
+    @Operation(summary = "Alterar senha do usuário logado",
+            description = "Atualiza a senha, revoga tokens anteriores e emite novo JWT + cookie HttpOnly")
     @SecurityRequirement(name = "bearerAuth")
-    public UserDTO changePassword(ChangePasswordRequest request, @Context SecurityContext securityContext) {
+    public Response changePassword(
+            ChangePasswordRequest request,
+            @Context SecurityContext securityContext,
+            @Context ContainerRequestContext requestContext) {
         User user = securitySupport.requireUser(securityContext);
         if (request == null || request.currentPassword() == null || request.newPassword() == null) {
             throw ApiException.badRequest("currentPassword and newPassword are required");
@@ -115,8 +119,15 @@ public class AuthResource {
         }
         user.setPassword(PasswordHasher.hash(request.newPassword()));
         user.setMustChangePassword(false);
+        user.setTokenVersion(user.getTokenVersion() + 1L);
         ds.save(user);
-        return UserDTO.from(user);
+
+        JwtService.JwtClaims claims = extractClaims(requestContext);
+        AuthService.AuthResult rotated = authService.rotateAfterPasswordChange(user, claims);
+        String cookie = buildSessionCookie(rotated.token(), authService.getExpirationSeconds(), isCookieSecure(securityContext));
+        return Response.ok(new LoginResponse(rotated.token(), UserDTO.from(user)))
+                .header(HttpHeaders.SET_COOKIE, cookie)
+                .build();
     }
 
     /**

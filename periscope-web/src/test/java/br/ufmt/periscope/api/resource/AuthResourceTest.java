@@ -113,24 +113,36 @@ class AuthResourceTest {
     }
 
     @Test
-    void changePasswordValidatesAndClearsMustChangeFlag() {
+    void changePasswordValidatesClearsMustChangeFlagAndRotatesTokens() {
+        ContainerRequestContext reqCtx = mock(ContainerRequestContext.class);
+        JwtService.JwtClaims claims = new JwtService.JwtClaims("admin", "ADMIN", 9999L, 1L, "jti-old", true, 0L);
         when(securitySupport.requireUser(secCtx)).thenReturn(user);
+        when(reqCtx.getProperty(JwtAuthFilter.CLAIMS_PROPERTY)).thenReturn(claims);
+        when(authService.rotateAfterPasswordChange(user, claims))
+                .thenReturn(new AuthService.AuthResult("jwt-rotated", user));
+        when(authService.getExpirationSeconds()).thenReturn(28800L);
 
         assertThatThrownBy(() -> authResource.changePassword(
-                new ChangePasswordRequest("oldpass123", "short"), secCtx))
+                new ChangePasswordRequest("oldpass123", "short"), secCtx, reqCtx))
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> assertThat(((ApiException) ex).getStatus()).isEqualTo(400));
 
         assertThatThrownBy(() -> authResource.changePassword(
-                new ChangePasswordRequest("wrongpass", "newpass1234"), secCtx))
+                new ChangePasswordRequest("wrongpass", "newpass1234"), secCtx, reqCtx))
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> assertThat(((ApiException) ex).getStatus()).isEqualTo(400));
 
-        UserDTO updated = authResource.changePassword(
-                new ChangePasswordRequest("oldpass123", "newStrongPass9"), secCtx);
+        Response resp = authResource.changePassword(
+                new ChangePasswordRequest("oldpass123", "newStrongPass9"), secCtx, reqCtx);
 
         verify(ds).save(user);
-        assertThat(updated.mustChangePassword()).isFalse();
+        verify(authService).rotateAfterPasswordChange(user, claims);
+        assertThat(resp.getStatus()).isEqualTo(200);
+        LoginResponse body = (LoginResponse) resp.getEntity();
+        assertThat(body.token()).isEqualTo("jwt-rotated");
+        assertThat(body.user().mustChangePassword()).isFalse();
+        assertThat(user.getTokenVersion()).isEqualTo(1L);
         assertThat(PasswordHasher.verify("newStrongPass9", user.getPassword())).isTrue();
+        assertThat(resp.getHeaderString(HttpHeaders.SET_COOKIE)).contains("periscope_token=jwt-rotated");
     }
 }

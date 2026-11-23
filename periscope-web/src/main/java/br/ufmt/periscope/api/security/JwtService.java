@@ -82,6 +82,10 @@ public class JwtService {
     }
 
     public String issueToken(String username, String userLevel) {
+        return issueToken(username, userLevel, false, 0L);
+    }
+
+    public String issueToken(String username, String userLevel, boolean mustChangePassword, long tokenVersion) {
         long iat = Instant.now().getEpochSecond();
         long exp = iat + expirationSeconds;
         String jti = UUID.randomUUID().toString();
@@ -93,6 +97,10 @@ public class JwtService {
             payloadMap.put("jti", jti);
             payloadMap.put("iat", iat);
             payloadMap.put("exp", exp);
+            if (mustChangePassword) {
+                payloadMap.put("mcp", true);
+            }
+            payloadMap.put("tv", tokenVersion);
 
             String header = B64URL.encodeToString(MAPPER.writeValueAsBytes(headerMap));
             String payload = B64URL.encodeToString(MAPPER.writeValueAsBytes(payloadMap));
@@ -145,7 +153,9 @@ public class JwtService {
         }
         long iat = readLong(payloadMap, "iat");
         String jti = readString(payloadMap, "jti");
-        return new JwtClaims(sub, userLevel, exp, iat, jti);
+        boolean mustChangePassword = Boolean.TRUE.equals(payloadMap.get("mcp"));
+        long tokenVersion = readOptionalLong(payloadMap, "tv", 0L);
+        return new JwtClaims(sub, userLevel, exp, iat, jti, mustChangePassword, tokenVersion);
     }
 
     void setSecretForTests(byte[] secretBytes) {
@@ -188,9 +198,25 @@ public class JwtService {
         throw new IllegalArgumentException("Token missing claim " + claim);
     }
 
-    public record JwtClaims(String subject, String userLevel, long exp, long iat, String jti) {
+    private static long readOptionalLong(Map<String, Object> map, String claim, long defaultValue) {
+        Object val = map.get(claim);
+        return val instanceof Number n ? n.longValue() : defaultValue;
+    }
+
+    public record JwtClaims(
+            String subject,
+            String userLevel,
+            long exp,
+            long iat,
+            String jti,
+            boolean mustChangePassword,
+            long tokenVersion) {
         public JwtClaims(String subject, String userLevel, long exp, long iat) {
-            this(subject, userLevel, exp, iat, null);
+            this(subject, userLevel, exp, iat, null, false, 0L);
+        }
+
+        public JwtClaims(String subject, String userLevel, long exp, long iat, String jti) {
+            this(subject, userLevel, exp, iat, jti, false, 0L);
         }
     }
 }

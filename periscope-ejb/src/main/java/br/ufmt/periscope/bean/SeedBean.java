@@ -29,7 +29,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 
@@ -181,13 +181,21 @@ public class SeedBean {
             return;
         }
         User admin = users.get(0);
+        boolean production = "true".equalsIgnoreCase(env.apply("PERISCOPE_PRODUCTION"));
         String username = env.apply("PERISCOPE_ADMIN_USERNAME");
         if (username != null && !username.isBlank()) {
             admin.setUsername(username.trim());
         }
         String password = env.apply("PERISCOPE_ADMIN_PASSWORD");
         if (password != null && !password.isBlank()) {
+            if (production && password.length() < 8) {
+                throw new IllegalStateException(
+                        "PERISCOPE_ADMIN_PASSWORD must be at least 8 characters when PERISCOPE_PRODUCTION=true");
+            }
             admin.setPassword(password);
+        } else if (production) {
+            throw new IllegalStateException(
+                    "PERISCOPE_ADMIN_PASSWORD (at least 8 characters) is required when PERISCOPE_PRODUCTION=true");
         }
         String email = env.apply("PERISCOPE_ADMIN_EMAIL");
         if (email != null && !email.isBlank()) {
@@ -206,34 +214,35 @@ public class SeedBean {
     private void initCommonsDescriptors() {
         if (ds.find(CommonDescriptor.class).count() == 0L) {
             log.info("Nenhum descritor comum encontrado.");
-            writer = resources.getIndexWriter();
-            if (writer == null) {
+            IndexWriter localWriter = resources.getIndexWriter();
+            if (localWriter == null) {
                 log.log(Level.SEVERE,
                         "Lucene IndexWriter unavailable under {0}; seeding descriptors to Mongo only",
                         PERISCOPE_DIR);
             }
-            List<CommonDescriptor> descriptors = YamlLoader
-                    .loadList("descriptors.yaml", CommonDescriptor.class);
-            Iterator<CommonDescriptor> it = descriptors.iterator();
-            while (it.hasNext()) {
-                CommonDescriptor desc = it.next();
-                ds.save(desc);
-                if (writer == null) {
-                    continue;
+            try {
+                List<CommonDescriptor> descriptors = YamlLoader
+                        .loadList("descriptors.yaml", CommonDescriptor.class);
+                Iterator<CommonDescriptor> it = descriptors.iterator();
+                while (it.hasNext()) {
+                    CommonDescriptor desc = it.next();
+                    ds.save(desc);
+                    if (localWriter == null || desc.getWord() == null) {
+                        continue;
+                    }
+                    Document doc = new Document();
+                    // Must use StringField for "id" to match PatentIndexer's IndexOptions.DOCS schema in Lucene 9
+                    doc.add(new StringField("id", desc.getWord(), Field.Store.YES));
+                    try {
+                        localWriter.deleteDocuments(new Term("id", doc.get("id")));
+                        localWriter.addDocument(doc);
+                    } catch (IOException ex) {
+                        Logger.getLogger(SeedBean.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
-                Document doc = new Document();
-                doc.add(new TextField("id", desc.getWord(), Field.Store.YES));
-                try {
-                    writer.deleteDocuments(new Term("id", doc.get("id")));
-                    writer.addDocument(doc);
-                } catch (IOException ex) {
-                    Logger.getLogger(SeedBean.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
-            log.info("Cadastrado " + descriptors.size() + " descritores comuns.");
-            if (writer != null) {
-                resources.closeWriter(writer);
+                log.info("Cadastrado " + descriptors.size() + " descritores comuns.");
+            } finally {
+                resources.closeWriter(localWriter);
             }
         }
     }

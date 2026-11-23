@@ -93,4 +93,12 @@ class JwtServiceTest {
         String tok = prodService.issueToken("admin", "ADMIN");
         assertThat(prodService.parseAndValidate(tok).subject()).isEqualTo("admin");
     }
+
+    @Test
+    void encodesMustChangePasswordAndTokenVersion() {
+        String restricted = jwtService.issueToken("admin", "ADMIN", true, 3L);
+        JwtService.JwtClaims claims = jwtService.parseAndValidate(restricted);
+        assertThat(claims.mustChangePassword()).isTrue();
+        assertThat(claims.tokenVersion()).isEqualTo(3L);
+    }
 }

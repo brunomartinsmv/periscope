@@ -126,7 +126,7 @@ public class FileResource {
         if (projectId == null) {
             throw ApiException.notFound("Patent has no project");
         }
-        securitySupport.requireProject(projectId, user);
+        securitySupport.requireProjectManager(projectId, user);
 
         Patent patent = ds.find(Patent.class)
                 .filter(eq("_id", oid))

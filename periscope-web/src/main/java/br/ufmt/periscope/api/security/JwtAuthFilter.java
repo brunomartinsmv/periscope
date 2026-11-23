@@ -30,12 +30,11 @@ public class JwtAuthFilter implements ContainerRequestFilter {
             return;
         }
         String path = requestContext.getUriInfo().getPath();
-        if (path != null) {
-            String normalized = path.startsWith("/") ? path.substring(1) : path;
-            if (("auth/login".equals(normalized) && "POST".equalsIgnoreCase(requestContext.getMethod()))
-                    || ("health".equals(normalized) && "GET".equalsIgnoreCase(requestContext.getMethod()))) {
-                return;
-            }
+        String normalized = path != null ? (path.startsWith("/") ? path.substring(1) : path) : "";
+        String method = requestContext.getMethod();
+        if (("auth/login".equals(normalized) && "POST".equalsIgnoreCase(method))
+                || ("health".equals(normalized) && "GET".equalsIgnoreCase(method))) {
+            return;
         }
 
         String token = resolveToken(requestContext);
@@ -45,6 +44,10 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         }
         try {
             JwtService.JwtClaims claims = authService.validate(token);
+            if (claims.mustChangePassword() && !isAllowedDuringForcedPasswordChange(normalized, method)) {
+                abortPasswordChangeRequired(requestContext);
+                return;
+            }
             final String username = claims.subject();
             final String role = normalizeRole(claims.userLevel());
             requestContext.setProperty("jwt.username", username);
@@ -104,6 +107,22 @@ public class JwtAuthFilter implements ContainerRequestFilter {
             return "USER";
         }
         return userLevel.trim().toUpperCase();
+    }
+
+    private static boolean isAllowedDuringForcedPasswordChange(String normalizedPath, String method) {
+        return ("auth/me".equals(normalizedPath) && "GET".equalsIgnoreCase(method))
+                || ("auth/change-password".equals(normalizedPath) && "POST".equalsIgnoreCase(method))
+                || ("auth/logout".equals(normalizedPath) && "POST".equalsIgnoreCase(method));
+    }
+
+    private static void abortPasswordChangeRequired(ContainerRequestContext ctx) {
+        ctx.abortWith(Response.status(Response.Status.FORBIDDEN)
+                .entity(Map.of(
+                        "error", "Password change required",
+                        "code", "PASSWORD_CHANGE_REQUIRED",
+                        "status", 403))
+                .type("application/json")
+                .build());
     }
 
     private static void abortUnauthorized(ContainerRequestContext ctx, String message) {

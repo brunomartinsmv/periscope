@@ -43,7 +43,7 @@ class AuthServiceTest {
     @Test
     void authenticateReturnsTokenAndUser() {
         when(userAuthenticator.authenticate("admin", "123456")).thenReturn(admin);
-        when(jwtService.issueToken("admin", "ADMIN")).thenReturn("jwt-token");
+        when(jwtService.issueToken("admin", "ADMIN", false, 0L)).thenReturn("jwt-token");
 
         AuthService.AuthResult result = authService.authenticate("admin", "123456");
 
@@ -63,6 +63,7 @@ class AuthServiceTest {
         JwtService.JwtClaims claims = new JwtService.JwtClaims("admin", "ADMIN", 9999L, 0L, "jti-1");
         when(jwtService.parseAndValidate("tok")).thenReturn(claims);
         when(revocationStore.isRevoked("jti-1")).thenReturn(false);
+        when(revocationStore.isVersionRevoked("admin", 0L)).thenReturn(false);
         assertThat(authService.validate("tok")).isEqualTo(claims);
     }
 
@@ -78,13 +79,38 @@ class AuthServiceTest {
     }
 
     @Test
+    void validateRejectsVersionRevokedToken() {
+        JwtService.JwtClaims claims = new JwtService.JwtClaims("admin", "ADMIN", 9999L, 0L, "jti-ok", false, 0L);
+        when(jwtService.parseAndValidate("tok")).thenReturn(claims);
+        when(revocationStore.isRevoked("jti-ok")).thenReturn(false);
+        when(revocationStore.isVersionRevoked("admin", 0L)).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.validate("tok"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("revoked");
+    }
+
+    @Test
     void refreshRevokesOldClaimsAndIssuesNewToken() {
         JwtService.JwtClaims oldClaims = new JwtService.JwtClaims("admin", "ADMIN", 9999L, 10L, "jti-old");
-        when(jwtService.issueToken("admin", "ADMIN")).thenReturn("new-jwt");
+        when(jwtService.issueToken("admin", "ADMIN", false, 0L)).thenReturn("new-jwt");
 
         AuthService.AuthResult refreshed = authService.refresh(admin, oldClaims);
 
         verify(revocationStore).revoke("jti-old", 9999L);
         assertThat(refreshed.token()).isEqualTo("new-jwt");
+    }
+
+    @Test
+    void rotateAfterPasswordChangeRevokesJtiAndPriorVersions() {
+        admin.setTokenVersion(1L);
+        JwtService.JwtClaims oldClaims = new JwtService.JwtClaims("admin", "ADMIN", 9999L, 10L, "jti-pw", true, 0L);
+        when(jwtService.issueToken("admin", "ADMIN", false, 1L)).thenReturn("rotated-jwt");
+
+        AuthService.AuthResult rotated = authService.rotateAfterPasswordChange(admin, oldClaims);
+
+        verify(revocationStore).revoke("jti-pw", 9999L);
+        verify(revocationStore).revokeAllForUserBeforeVersion("admin", 1L);
+        assertThat(rotated.token()).isEqualTo("rotated-jwt");
     }
 }

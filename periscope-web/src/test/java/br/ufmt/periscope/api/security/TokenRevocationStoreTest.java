@@ -21,4 +21,17 @@ class TokenRevocationStoreTest {
         assertThat(store.isRevoked("jti-unknown")).isFalse();
         assertThat(store.isRevoked(null)).isFalse();
     }
+
+    @Test
+    void revokesAllTokensBelowMinUserVersion() {
+        TokenRevocationStore store = new TokenRevocationStore();
+        assertThat(store.isVersionRevoked("admin", 0L)).isFalse();
+
+        store.revokeAllForUserBeforeVersion("admin", 2L);
+
+        assertThat(store.isVersionRevoked("admin", 0L)).isTrue();
+        assertThat(store.isVersionRevoked("admin", 1L)).isTrue();
+        assertThat(store.isVersionRevoked("admin", 2L)).isFalse();
+        assertThat(store.isVersionRevoked("other", 0L)).isFalse();
+    }
 }

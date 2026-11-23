@@ -106,7 +106,7 @@ public class ProjectPatentResource {
             PatentCreateRequest request,
             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(projectId, user);
+        Project project = securitySupport.requireProjectManager(projectId, user);
         if (request == null || request.title() == null || request.title().isBlank()) {
             throw ApiException.badRequest("title is required");
         }
@@ -160,7 +160,7 @@ public class ProjectPatentResource {
             MultipartFormDataInput input,
             @Context SecurityContext securityContext) throws Exception {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(projectId, user);
+        Project project = securitySupport.requireProjectManager(projectId, user);
         if (project.getPatents() == null) {
             project.setPatents(new ArrayList<>());
         }

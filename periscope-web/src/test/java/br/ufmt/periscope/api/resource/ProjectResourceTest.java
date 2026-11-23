@@ -91,7 +91,8 @@ class ProjectResourceTest {
         project.setOwner(owner);
 
         when(securitySupport.requireUser(secCtx)).thenReturn(observer);
-        when(securitySupport.requireProject(project.getId().toString(), observer)).thenReturn(project);
+        when(securitySupport.requireProjectManager(project.getId().toString(), observer))
+                .thenThrow(ApiException.forbidden("Only the owner or an admin can modify this project"));
 
         assertThatThrownBy(() -> projectResource.update(
                 project.getId().toString(),
@@ -115,7 +116,7 @@ class ProjectResourceTest {
         project.setOwner(owner);
 
         when(securitySupport.requireUser(secCtx)).thenReturn(owner);
-        when(securitySupport.requireProject(project.getId().toString(), owner)).thenReturn(project);
+        when(securitySupport.requireProjectManager(project.getId().toString(), owner)).thenReturn(project);
         when(securitySupport.countPatents(project)).thenReturn(0L);
 
         Query<User> query = mock(Query.class);

@@ -196,7 +196,7 @@ public class HarmonizationResource {
             RuleRequest request,
             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(projectId, user);
+        Project project = securitySupport.requireProjectManager(projectId, user);
         Rule rule = new Rule();
         rule.setProject(project);
         applyRuleFields(rule, request, true);
@@ -214,7 +214,7 @@ public class HarmonizationResource {
             RuleRequest request,
             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(projectId, user);
+        Project project = securitySupport.requireProjectManager(projectId, user);
         Rule rule = loadProjectRule(ruleId, project);
         if (request == null) {
             throw ApiException.badRequest("Body is required");
@@ -233,7 +233,7 @@ public class HarmonizationResource {
             @PathParam("ruleId") String ruleId,
             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(projectId, user);
+        Project project = securitySupport.requireProjectManager(projectId, user);
         Rule rule = loadProjectRule(ruleId, project);
         if (rule.getType() == RuleType.INVENTOR) {
             ruleRepository.undoInventorRule(project, rule.getName());
@@ -255,7 +255,7 @@ public class HarmonizationResource {
             @PathParam("ruleId") String ruleId,
             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(projectId, user);
+        Project project = securitySupport.requireProjectManager(projectId, user);
         loadProjectRule(ruleId, project);
         ruleRepository.delete(ruleId);
         return Response.noContent().build();
@@ -268,7 +268,7 @@ public class HarmonizationResource {
             @PathParam("projectId") String projectId,
             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(projectId, user);
+        Project project = securitySupport.requireProjectManager(projectId, user);
         List<Rule> rules = ruleRepository.getAllRule(project);
         int applied = 0;
         for (Rule rule : rules) {
@@ -290,7 +290,7 @@ public class HarmonizationResource {
             @PathParam("ruleId") String ruleId,
             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(projectId, user);
+        Project project = securitySupport.requireProjectManager(projectId, user);
         Rule rule = loadProjectRule(ruleId, project);
         rule.setProject(project);
         harmonization.applyRule(rule);

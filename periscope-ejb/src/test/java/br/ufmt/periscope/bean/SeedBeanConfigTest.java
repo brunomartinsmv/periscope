@@ -6,6 +6,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SeedBeanConfigTest {
 
@@ -43,5 +44,29 @@ class SeedBeanConfigTest {
         assertThat(admin.getUsername()).isEqualTo("admin");
         assertThat(admin.getPassword()).isEqualTo("123456");
         assertThat(admin.getMustChangePassword()).isFalse();
+    }
+
+    @Test
+    void requiresStrongAdminPasswordInProductionMode() {
+        User admin = new User();
+        admin.setUsername("admin");
+        admin.setPassword("123456");
+
+        assertThatThrownBy(() -> SeedBean.applyAdminEnvOverrides(
+                List.of(admin), Map.of("PERISCOPE_PRODUCTION", "true")::get))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("PERISCOPE_ADMIN_PASSWORD");
+
+        assertThatThrownBy(() -> SeedBean.applyAdminEnvOverrides(
+                List.of(admin), Map.of(
+                        "PERISCOPE_PRODUCTION", "true",
+                        "PERISCOPE_ADMIN_PASSWORD", "short")::get))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("8 characters");
+
+        SeedBean.applyAdminEnvOverrides(List.of(admin), Map.of(
+                "PERISCOPE_PRODUCTION", "true",
+                "PERISCOPE_ADMIN_PASSWORD", "ProdAdmin#2026")::get);
+        assertThat(admin.getPassword()).isEqualTo("ProdAdmin#2026");
     }
 }

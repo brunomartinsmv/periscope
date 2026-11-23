@@ -6,7 +6,6 @@ import br.ufmt.periscope.api.dto.ProjectRequest;
 import br.ufmt.periscope.api.security.ApiSecuritySupport;
 import br.ufmt.periscope.model.Project;
 import br.ufmt.periscope.model.User;
-import br.ufmt.periscope.model.UserLevel;
 import br.ufmt.periscope.repository.ProjectRepository;
 import dev.morphia.Datastore;
 import jakarta.annotation.security.RolesAllowed;
@@ -103,8 +102,7 @@ public class ProjectResource {
     public ProjectDTO update(@PathParam("id") String id, ProjectRequest request,
                              @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(id, user);
-        requireManager(project, user);
+        Project project = securitySupport.requireProjectManager(id, user);
         if (request == null) {
             throw ApiException.badRequest("Body is required");
         }
@@ -133,8 +131,7 @@ public class ProjectResource {
             @PathParam("userId") String userId,
             @Context SecurityContext securityContext) {
         User actor = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(id, actor);
-        requireManager(project, actor);
+        Project project = securitySupport.requireProjectManager(id, actor);
         User observer = findUserById(userId);
         if (project.getOwner() != null && observer.getId().equals(project.getOwner().getId())) {
             throw ApiException.badRequest("Project owner cannot be added as observer");
@@ -161,8 +158,7 @@ public class ProjectResource {
             @PathParam("userId") String userId,
             @Context SecurityContext securityContext) {
         User actor = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(id, actor);
-        requireManager(project, actor);
+        Project project = securitySupport.requireProjectManager(id, actor);
         if (userId == null || !ObjectId.isValid(userId)) {
             throw ApiException.badRequest("Invalid user id");
         }
@@ -180,19 +176,9 @@ public class ProjectResource {
     @Operation(summary = "Excluir projeto")
     public Response delete(@PathParam("id") String id, @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
-        Project project = securitySupport.requireProject(id, user);
-        requireManager(project, user);
+        securitySupport.requireProjectManager(id, user);
         projectRepository.deleteProject(id);
         return Response.noContent().build();
-    }
-
-    private static void requireManager(Project project, User user) {
-        if (user.getUserLevel() == UserLevel.ADMIN) {
-            return;
-        }
-        if (project.getOwner() == null || !project.getOwner().getId().equals(user.getId())) {
-            throw ApiException.forbidden("Only the owner or an admin can modify this project");
-        }
     }
 
     private List<User> resolveObservers(List<String> observerIds, User owner) {
