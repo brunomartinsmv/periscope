@@ -4,28 +4,29 @@
 repository:
   # Short description shown on the GitHub repository page
   description: >-
-    Patent analysis and name-harmonization web app (UFMT). Assists the Brazilian
-    community in using Industrial Property System data — Jakarta EE 10 / WildFly,
-    MongoDB (Morphia), Lucene Fast-Join, REST API + React SPA.
+    Plataforma web da UFMT para prospecção tecnológica, harmonização de patentes
+    com Apache Lucene 9 e 13 relatórios interativos (Java 21, Jakarta EE 10,
+    MongoDB e React).
 
-  # Homepage (docs / app); leave blank if none
-  # homepage: https://github.com/brunomartinsmv/periscope
+  # Homepage (landing page / docs)
+  homepage: https://brunomartinsmv.github.io/periscope/
 
   # Topics shown on the repository page (comma-separated or YAML list)
   topics:
     - patents
     - patent-analysis
     - industrial-property
+    - ufmt
+    - java
     - jakarta-ee
     - wildfly
-    - java
     - mongodb
-    - morphia
     - lucene
     - react
     - typescript
+    - docker
     - rest-api
-    - ufmt
+    - openapi
 
   default_branch: master
   has_issues: true
