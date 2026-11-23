@@ -32,11 +32,17 @@ jobs:
           docker push "${{ vars.REGISTRY }}/periscope:staging"
 
       - name: Deploy webhook / hook
-        if: ${{ secrets.STAGING_DEPLOY_WEBHOOK != '' }}
+        env:
+          STAGING_DEPLOY_WEBHOOK: ${{ secrets.STAGING_DEPLOY_WEBHOOK }}
+          REGISTRY: ${{ vars.REGISTRY }}
         run: |
-          curl -fsSL -X POST "${{ secrets.STAGING_DEPLOY_WEBHOOK }}" \
+          if [ -z "$STAGING_DEPLOY_WEBHOOK" ]; then
+            echo "STAGING_DEPLOY_WEBHOOK not configured; skipping deploy webhook."
+            exit 0
+          fi
+          curl -fsSL -X POST "$STAGING_DEPLOY_WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "{\"image\":\"${{ vars.REGISTRY }}/periscope:${{ github.sha }}\"}"
+            -d "{\"image\":\"${REGISTRY}/periscope:${{ github.sha }}\"}"
 
       - name: Smoke check health endpoint
         run: |
