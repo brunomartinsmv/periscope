@@ -55,49 +55,68 @@ public class PatentIndexer {
     }
 
     public void deleteIndexesForProject(Project project) {
-//        log.info("Deletando indices para o projeto " + project.getTitle());
-        writer = resources.getIndexWriter();
-        try {
-            writer.deleteDocuments(new Term("project", project.getId().toString()));
-            log.info("Indices deletados com sucesso");
-        } catch (IOException e) {
-            log.info("Ocorreu algum erro deletando os indices.");
-            e.printStackTrace();
+        if (project == null || project.getId() == null) {
+            return;
         }
-        resources.closeWriter(writer);
+        IndexWriter localWriter = resources.getIndexWriter();
+        if (localWriter == null) {
+            return;
+        }
+        try {
+            localWriter.deleteDocuments(new Term("project", project.getId().toString()));
+            if (log != null) {
+                log.info("Indices deletados com sucesso");
+            }
+        } catch (IOException e) {
+            if (log != null) {
+                log.log(Level.SEVERE, "Ocorreu algum erro deletando os indices.", e);
+            }
+        } finally {
+            resources.closeWriter(localWriter);
+        }
     }
 
     public void index(List<String> pas, List<String> invs, Project project) {
+        if (project == null || project.getId() == null) {
+            return;
+        }
+        IndexWriter localWriter = resources.getIndexWriter();
+        if (localWriter == null) {
+            return;
+        }
         try {
-            writer = resources.getIndexWriter();
-            if (writer != null) {
-                if (pas != null) {
-                    for (String a : pas) {
-                        Document doc = new Document();
-                        doc.add(new TextField("applicant", a, Field.Store.YES));
-                        doc.add(new StringField("tokens", fs.getAnalyzed("applicant", a), Field.Store.YES));
-                        doc.add(new StringField("id", project.getId().toString() + "app" + String.valueOf(a.hashCode()), Field.Store.YES));
-                        doc.add(new StringField("project", project.getId().toString(), Field.Store.YES));
-                        writer.deleteDocuments(new Term("id", doc.get("id")));
-                        writer.addDocument(doc);
+            if (pas != null) {
+                for (String a : pas) {
+                    if (a == null || a.isBlank()) {
+                        continue;
                     }
+                    Document doc = new Document();
+                    doc.add(new TextField("applicant", a, Field.Store.YES));
+                    doc.add(new StringField("tokens", fs.getAnalyzed("applicant", a), Field.Store.YES));
+                    doc.add(new StringField("id", project.getId().toString() + "app" + String.valueOf(a.hashCode()), Field.Store.YES));
+                    doc.add(new StringField("project", project.getId().toString(), Field.Store.YES));
+                    localWriter.deleteDocuments(new Term("id", doc.get("id")));
+                    localWriter.addDocument(doc);
                 }
-                if (invs != null) {
-                    for (String a : invs) {
-                        Document doc = new Document();
-                        doc.add(new TextField("inventor", a, Field.Store.YES));
-                        doc.add(new StringField("tokens", fs.getAnalyzed("inventor", a), Field.Store.YES));
-                        doc.add(new StringField("id", project.getId().toString() + "inv" + String.valueOf(a.hashCode()), Field.Store.YES));
-                        doc.add(new StringField("project", project.getId().toString(), Field.Store.YES));
-                        writer.deleteDocuments(new Term("id", doc.get("id")));
-                        writer.addDocument(doc);
+            }
+            if (invs != null) {
+                for (String a : invs) {
+                    if (a == null || a.isBlank()) {
+                        continue;
                     }
+                    Document doc = new Document();
+                    doc.add(new TextField("inventor", a, Field.Store.YES));
+                    doc.add(new StringField("tokens", fs.getAnalyzed("inventor", a), Field.Store.YES));
+                    doc.add(new StringField("id", project.getId().toString() + "inv" + String.valueOf(a.hashCode()), Field.Store.YES));
+                    doc.add(new StringField("project", project.getId().toString(), Field.Store.YES));
+                    localWriter.deleteDocuments(new Term("id", doc.get("id")));
+                    localWriter.addDocument(doc);
                 }
-
-                resources.closeWriter(writer);
             }
         } catch (IOException ex) {
             Logger.getLogger(PatentIndexer.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            resources.closeWriter(localWriter);
         }
     }
 
@@ -109,42 +128,56 @@ public class PatentIndexer {
     }
 
     public void indexRule(List<String> pas, String pa, List<String> invs, String inv, Project project) {
+        if (project == null || project.getId() == null) {
+            return;
+        }
+        IndexWriter localWriter = resources.getIndexWriter();
+        if (localWriter == null) {
+            return;
+        }
         try {
-            writer = resources.getIndexWriter();
-            if (writer != null) {
-                if (pas != null) {
-                    for (String a : pas) {
-                        // Must use StringField for "id" — same index options as index()
-                        writer.deleteDocuments(new Term("id",
-                                project.getId().toString() + "app" + String.valueOf(a.hashCode())));
+            if (pas != null) {
+                for (String a : pas) {
+                    if (a == null) {
+                        continue;
                     }
+                    // Must use StringField for "id" — same index options as index()
+                    localWriter.deleteDocuments(new Term("id",
+                            project.getId().toString() + "app" + String.valueOf(a.hashCode())));
+                }
+                if (pa != null && !pa.isBlank()) {
                     Document doc = new Document();
                     doc.add(new StringField("id", project.getId().toString() + "app" + String.valueOf(pa.hashCode()), Field.Store.YES));
                     doc.add(new TextField("applicant", pa, Field.Store.YES));
                     doc.add(new StringField("tokens", fs.getAnalyzed("applicant", pa), Field.Store.YES));
                     doc.add(new StringField("project", project.getId().toString(), Field.Store.YES));
-                    writer.deleteDocuments(new Term("id", doc.get("id")));
-                    writer.addDocument(doc);
+                    localWriter.deleteDocuments(new Term("id", doc.get("id")));
+                    localWriter.addDocument(doc);
                 }
-                if (invs != null) {
-                    for (String a : invs) {
-                        writer.deleteDocuments(new Term("id",
-                                project.getId().toString() + "inv" + String.valueOf(a.hashCode())));
+            }
+            if (invs != null) {
+                for (String a : invs) {
+                    if (a == null) {
+                        continue;
                     }
+                    localWriter.deleteDocuments(new Term("id",
+                            project.getId().toString() + "inv" + String.valueOf(a.hashCode())));
+                }
+                if (inv != null && !inv.isBlank()) {
                     Document doc = new Document();
                     doc.add(new StringField("id", project.getId().toString() + "inv" + String.valueOf(inv.hashCode()), Field.Store.YES));
                     doc.add(new TextField("inventor", inv, Field.Store.YES));
                     doc.add(new StringField("tokens", fs.getAnalyzed("inventor", inv), Field.Store.YES));
                     doc.add(new StringField("project", project.getId().toString(), Field.Store.YES));
-                    writer.deleteDocuments(new Term("id", doc.get("id")));
-                    writer.addDocument(doc);
+                    localWriter.deleteDocuments(new Term("id", doc.get("id")));
+                    localWriter.addDocument(doc);
                 }
-                resources.closeWriter(writer);
             }
         } catch (IOException ex) {
             Logger.getLogger(PatentIndexer.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            resources.closeWriter(localWriter);
         }
-
     }
 
     public void indexPatent(Patent p) {

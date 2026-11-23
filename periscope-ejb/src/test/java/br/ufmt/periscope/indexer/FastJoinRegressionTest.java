@@ -154,6 +154,81 @@ public class FastJoinRegressionTest {
                 "Microsoft vs Samsung should not pass fuzzy thresholds");
     }
 
+    @Test
+    void seededDescriptorsAndPatentIndexingShareIdSchemaAndReleaseWriteLock() throws Exception {
+        String previousDir = br.ufmt.periscope.bean.SeedBean.PERISCOPE_DIR;
+        java.nio.file.Path tmpDir = java.nio.file.Files.createTempDirectory("periscope-lucene-it");
+        try {
+            br.ufmt.periscope.bean.SeedBean.PERISCOPE_DIR = tmpDir.toString();
+
+            DataSignaturesAnalyzer dsa = new DataSignaturesAnalyzer(descriptors);
+            FastJoinAnalyzer fja = new FastJoinAnalyzer(descriptors);
+            QuerySignaturesAnalyzer qsa = new QuerySignaturesAnalyzer(descriptors);
+
+            LuceneIndexerResources res = new LuceneIndexerResources();
+            setField(res, "fastJoinAnalyzer", fja);
+            setField(res, "dataSignaturesAnalyzer", dsa);
+
+            br.ufmt.periscope.indexer.resources.search.FuzzyTokenSimilaritySearch search =
+                    new br.ufmt.periscope.indexer.resources.search.FuzzyTokenSimilaritySearch();
+            setField(search, "fastJoinAnalyzer", fja);
+            setField(search, "querySignaturesAnalyzer", qsa);
+            setField(search, "resources", res);
+
+            PatentIndexer indexer = new PatentIndexer();
+            setField(indexer, "resources", res);
+            setField(indexer, "fs", search);
+            setField(indexer, "log", java.util.logging.Logger.getLogger("test"));
+
+            // Step 1: Seed common descriptors using StringField("id") (same as SeedBean)
+            IndexWriter seedWriter = res.getIndexWriter();
+            try {
+                for (String w : List.of("gmbh", "ltda", "corp")) {
+                    Document doc = new Document();
+                    doc.add(new org.apache.lucene.document.StringField("id", w, Field.Store.YES));
+                    seedWriter.deleteDocuments(new org.apache.lucene.index.Term("id", w));
+                    seedWriter.addDocument(doc);
+                }
+            } finally {
+                res.closeWriter(seedWriter);
+            }
+
+            // Step 2: Index DPMA applicants/inventors into the same directory
+            br.ufmt.periscope.model.Project proj = new br.ufmt.periscope.model.Project();
+            proj.setId(new org.bson.types.ObjectId());
+            indexer.index(
+                    List.of("ACME GMBH", "UFMT PARTNER GMBH"),
+                    List.of("SCHMIDT HANS", "MUELLER ANNA"),
+                    proj);
+
+            // Step 3: Search suggestions for ACME GMBH
+            List<Document> hits = search.search("applicant", proj.getId().toString(), "ACME GMBH", 50);
+            assertTrue(hits.stream().anyMatch(d -> "ACME GMBH".equals(d.get("applicant"))),
+                    "ACME GMBH must be returned by Fast-Join suggestions after descriptor seeding");
+
+            // Step 4: Delete project indexes must succeed without LockObtainFailedException or NPE
+            indexer.deleteIndexesForProject(proj);
+            List<Document> afterDelete = search.search("applicant", proj.getId().toString(), "ACME GMBH", 50);
+            assertTrue(afterDelete.isEmpty(), "Project entries must be removed after deleteIndexesForProject");
+        } finally {
+            br.ufmt.periscope.bean.SeedBean.PERISCOPE_DIR = previousDir;
+            try (var walk = java.nio.file.Files.walk(tmpDir)) {
+                walk.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                    try {
+                        java.nio.file.Files.deleteIfExists(p);
+                    } catch (IOException ignored) {
+                    }
+                });
+            }
+        }
+    }
+
+    private static void setField(Object target, String name, Object value) throws Exception {
+        java.lang.reflect.Field f = target.getClass().getDeclaredField(name);
+        f.setAccessible(true);
+        f.set(target, value);
+    }
+
     private static List<String> analyze(Analyzer analyzer, String field, String text) throws IOException {
         List<String> tokens = new ArrayList<>();
         try (TokenStream ts = analyzer.tokenStream(field, text)) {

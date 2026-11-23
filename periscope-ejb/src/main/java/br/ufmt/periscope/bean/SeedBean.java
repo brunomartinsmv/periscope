@@ -29,7 +29,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 
@@ -58,16 +58,16 @@ public class SeedBean {
         // existing Lucene files under PERISCOPE_DIR before the first deploy so a
         // fresh index can be created (see LuceneIndexerResources).
         PERISCOPE_DIR = System.getenv("PERISCOPE_DIR");
-        if (PERISCOPE_DIR == null) {
+        if (PERISCOPE_DIR == null || PERISCOPE_DIR.isBlank()) {
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
                 PERISCOPE_DIR = "C:\\ProgramData\\Periscope";
             } else {
                 PERISCOPE_DIR = "/opt/periscope";
             }
-            File dir = new File(PERISCOPE_DIR);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+        }
+        File dir = new File(PERISCOPE_DIR);
+        if (!dir.exists()) {
+            dir.mkdirs();
         }
 
     }
@@ -163,6 +163,7 @@ public class SeedBean {
         if (ds.find(User.class).count() == 0L) {
             log.info("Nenhum usuário encontrado.");
             List<User> users = YamlLoader.loadList("user-inicial.yaml", User.class);
+            applyAdminEnvOverrides(users, System::getenv);
             Iterator<User> it = users.iterator();
             while (it.hasNext()) {
                 User user = it.next();
@@ -175,6 +176,37 @@ public class SeedBean {
         }
     }
 
+    public static void applyAdminEnvOverrides(List<User> users, java.util.function.Function<String, String> env) {
+        if (users == null || users.isEmpty() || env == null) {
+            return;
+        }
+        User admin = users.get(0);
+        boolean production = "true".equalsIgnoreCase(env.apply("PERISCOPE_PRODUCTION"));
+        String username = env.apply("PERISCOPE_ADMIN_USERNAME");
+        if (username != null && !username.isBlank()) {
+            admin.setUsername(username.trim());
+        }
+        String password = env.apply("PERISCOPE_ADMIN_PASSWORD");
+        if (password != null && !password.isBlank()) {
+            if (production && password.length() < 8) {
+                throw new IllegalStateException(
+                        "PERISCOPE_ADMIN_PASSWORD must be at least 8 characters when PERISCOPE_PRODUCTION=true");
+            }
+            admin.setPassword(password);
+        } else if (production) {
+            throw new IllegalStateException(
+                    "PERISCOPE_ADMIN_PASSWORD (at least 8 characters) is required when PERISCOPE_PRODUCTION=true");
+        }
+        String email = env.apply("PERISCOPE_ADMIN_EMAIL");
+        if (email != null && !email.isBlank()) {
+            admin.setEmail(email.trim());
+        }
+        String forceChange = env.apply("PERISCOPE_FORCE_ADMIN_PASSWORD_CHANGE");
+        if ("true".equalsIgnoreCase(forceChange)) {
+            admin.setMustChangePassword(true);
+        }
+    }
+
     /**
      * Inicia os descritores comuns para o processo de harmonização a partir do
      * arquivo yaml correspondente
@@ -182,34 +214,35 @@ public class SeedBean {
     private void initCommonsDescriptors() {
         if (ds.find(CommonDescriptor.class).count() == 0L) {
             log.info("Nenhum descritor comum encontrado.");
-            writer = resources.getIndexWriter();
-            if (writer == null) {
+            IndexWriter localWriter = resources.getIndexWriter();
+            if (localWriter == null) {
                 log.log(Level.SEVERE,
                         "Lucene IndexWriter unavailable under {0}; seeding descriptors to Mongo only",
                         PERISCOPE_DIR);
             }
-            List<CommonDescriptor> descriptors = YamlLoader
-                    .loadList("descriptors.yaml", CommonDescriptor.class);
-            Iterator<CommonDescriptor> it = descriptors.iterator();
-            while (it.hasNext()) {
-                CommonDescriptor desc = it.next();
-                ds.save(desc);
-                if (writer == null) {
-                    continue;
+            try {
+                List<CommonDescriptor> descriptors = YamlLoader
+                        .loadList("descriptors.yaml", CommonDescriptor.class);
+                Iterator<CommonDescriptor> it = descriptors.iterator();
+                while (it.hasNext()) {
+                    CommonDescriptor desc = it.next();
+                    ds.save(desc);
+                    if (localWriter == null || desc.getWord() == null) {
+                        continue;
+                    }
+                    Document doc = new Document();
+                    // Must use StringField for "id" to match PatentIndexer's IndexOptions.DOCS schema in Lucene 9
+                    doc.add(new StringField("id", desc.getWord(), Field.Store.YES));
+                    try {
+                        localWriter.deleteDocuments(new Term("id", doc.get("id")));
+                        localWriter.addDocument(doc);
+                    } catch (IOException ex) {
+                        Logger.getLogger(SeedBean.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
-                Document doc = new Document();
-                doc.add(new TextField("id", desc.getWord(), Field.Store.YES));
-                try {
-                    writer.deleteDocuments(new Term("id", doc.get("id")));
-                    writer.addDocument(doc);
-                } catch (IOException ex) {
-                    Logger.getLogger(SeedBean.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
-            log.info("Cadastrado " + descriptors.size() + " descritores comuns.");
-            if (writer != null) {
-                resources.closeWriter(writer);
+                log.info("Cadastrado " + descriptors.size() + " descritores comuns.");
+            } finally {
+                resources.closeWriter(localWriter);
             }
         }
     }

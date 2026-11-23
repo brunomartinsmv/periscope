@@ -132,12 +132,25 @@ public class LuceneIndexerResources {
         if (writer == null) {
             return;
         }
+        Directory dir = writer.getDirectory();
         try {
             writer.deleteUnusedFiles();
             writer.commit();
-            writer.close();
-        } catch (IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
+        } catch (IOException | RuntimeException ex) {
+            LOG.log(Level.SEVERE, "Failed committing Lucene IndexWriter", ex);
+        } finally {
+            try {
+                writer.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, "Failed closing Lucene IndexWriter", ex);
+            }
+            if (dir != null) {
+                try {
+                    dir.close();
+                } catch (IOException ex) {
+                    LOG.log(Level.FINE, "Failed closing Lucene Directory", ex);
+                }
+            }
         }
     }
 

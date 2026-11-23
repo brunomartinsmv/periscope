@@ -27,12 +27,11 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-
-import static dev.morphia.query.filters.Filters.eq;
-
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
+import static dev.morphia.query.filters.Filters.eq;
 
 @Path("/patents")
 @Produces(MediaType.APPLICATION_JSON)
@@ -52,6 +51,9 @@ public class PatentResource {
     @Inject
     private ApiSecuritySupport securitySupport;
 
+    @Inject
+    private PatentMapperSupport patentMapper;
+
     @GET
     @Path("/{id}")
     @Operation(summary = "Obter patente")
@@ -69,28 +71,37 @@ public class PatentResource {
                             @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         LoadedPatent loaded = findPatent(id);
-        securitySupport.requireProject(loaded.projectId(), user);
+        securitySupport.requireProjectManager(loaded.projectId(), user);
         if (request == null) {
             throw ApiException.badRequest("Body is required");
         }
         Patent patent = loaded.patent();
-        if (request.title() != null) {
-            patent.setTitleSelect(request.title());
-        }
-        if (request.abstractText() != null) {
-            patent.setAbstractSelect(request.abstractText());
-        }
-        if (request.blacklisted() != null) {
-            patent.setBlacklisted(request.blacklisted());
-        }
-        if (request.completed() != null) {
-            patent.setCompleted(request.completed());
-        }
+        patentMapper.applyFields(
+                patent,
+                request.title(),
+                request.abstractText(),
+                request.publicationNumber(),
+                request.publicationDate(),
+                request.applicationNumber(),
+                request.applicationDate(),
+                request.applicationCountry(),
+                request.language(),
+                request.mainClassification(),
+                request.classifications(),
+                request.applicants(),
+                request.inventors(),
+                request.priorities(),
+                request.blacklisted(),
+                request.completed());
         // Keep a stub project so Morphia save retains the DBRef
         Project stub = new Project();
         stub.setId(new ObjectId(loaded.projectId()));
         patent.setProject(stub);
         patentRepository.savePatent(patent);
+        if (request.completed() != null && !request.completed().equals(patent.getCompleted())) {
+            patent.setCompleted(request.completed());
+            ds.save(patent);
+        }
         return PatentDTO.from(patent, loaded.projectId());
     }
 
@@ -100,7 +111,7 @@ public class PatentResource {
     public Response delete(@PathParam("id") String id, @Context SecurityContext securityContext) {
         User user = securitySupport.requireUser(securityContext);
         LoadedPatent loaded = findPatent(id);
-        Project project = securitySupport.requireProject(loaded.projectId(), user);
+        Project project = securitySupport.requireProjectManager(loaded.projectId(), user);
         if (project.getPatents() != null) {
             ObjectId oid = loaded.patent().getId();
             project.getPatents().removeIf(p -> p.getId() != null && p.getId().equals(oid));

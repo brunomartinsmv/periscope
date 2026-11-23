@@ -50,6 +50,30 @@ public class ApiSecuritySupport {
         return project;
     }
 
+    public Project requireProjectManager(String projectId, User user) {
+        Project project = requireProject(projectId, user);
+        requireManager(project, user);
+        return project;
+    }
+
+    public void requireManager(Project project, User user) {
+        if (!canManage(project, user)) {
+            throw ApiException.forbidden("Only the owner or an admin can modify this project");
+        }
+    }
+
+    public boolean canManage(Project project, User user) {
+        if (user == null || project == null) {
+            return false;
+        }
+        if (user.getUserLevel() == UserLevel.ADMIN) {
+            return true;
+        }
+        return project.getOwner() != null
+                && project.getOwner().getId() != null
+                && project.getOwner().getId().equals(user.getId());
+    }
+
     public boolean canAccess(Project project, User user) {
         if (user.getUserLevel() == UserLevel.ADMIN) {
             return true;

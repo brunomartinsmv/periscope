@@ -20,6 +20,8 @@ public class User implements Serializable {
     private String lastname;
     private String email;
     private UserLevel userLevel;
+    private Boolean mustChangePassword = false;
+    private Long tokenVersion = 0L;
     /**
      * Lazy on purpose: this is the inverse of {@code Project.owner}/{@code Project.observers},
      * so eager resolution would make Morphia loop between user and project documents.
@@ -81,6 +83,22 @@ public class User implements Serializable {
 
     public void setUserLevel(UserLevel userLevel) {
         this.userLevel = userLevel;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
+    public long getTokenVersion() {
+        return tokenVersion != null ? tokenVersion : 0L;
+    }
+
+    public void setTokenVersion(Long tokenVersion) {
+        this.tokenVersion = tokenVersion != null ? tokenVersion : 0L;
     }
 
     public List<Project> getProjects() {
