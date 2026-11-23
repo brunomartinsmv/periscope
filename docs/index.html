@@ -191,54 +191,54 @@
       color: var(--ink);
     }
 
-    /* Editorial Split Hero */
+    /* Centered Editorial Hero */
     .hero {
-      padding: 56px 0 44px;
+      padding: 64px 0 48px;
+      text-align: center;
     }
 
-    .hero-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      gap: 48px;
-      align-items: end;
+    .hero-stack {
+      max-width: 880px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
     }
 
     .hero-title {
       font-family: var(--font-serif);
-      font-size: clamp(2.4rem, 4.4vw, 3.85rem);
-      font-weight: 500;
-      line-height: 1.06;
-      letter-spacing: -0.028em;
+      font-size: clamp(2.45rem, 4.6vw, 3.75rem);
+      font-weight: 600;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
       color: var(--ink);
-      max-width: 18ch;
-    }
-
-    .hero-copy {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      padding-bottom: 6px;
+      max-width: 24ch;
+      text-wrap: balance;
     }
 
     .hero-lead {
       font-size: 1.06rem;
       line-height: 1.65;
       color: var(--slate);
-      max-width: 48ch;
+      max-width: 58ch;
     }
 
     .hero-actions {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 12px;
+      margin-top: 6px;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 11px 20px;
-      border-radius: 6px;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 999px;
       font-family: var(--font-sans);
       font-size: 0.94rem;
       font-weight: 500;
@@ -720,16 +720,11 @@
 
     /* Responsive */
     @media (max-width: 1024px) {
-      .hero-grid,
       .stage-grid,
       .split-ledger,
       .deploy-grid {
         grid-template-columns: 1fr;
         gap: 32px;
-      }
-
-      .hero-title {
-        max-width: 18ch;
       }
 
       .chapter-rail {
@@ -823,14 +818,17 @@
 
   <main>
     <section class="hero">
-      <div class="container hero-grid">
-        <h1 class="hero-title" data-i18n="hero.title">Inteligência de patentes para prospecção tecnológica.</h1>
-        <div class="hero-copy">
+      <div class="container">
+        <div class="hero-stack">
+          <h1 class="hero-title" data-i18n="hero.title">Inteligência de patentes para prospecção tecnológica.</h1>
           <p class="hero-lead" data-i18n="hero.lead">
             Reúna bases Espacenet, Patentscope e DPMA em projetos compartilhados, unifique nomes de depositantes e inventores com busca fuzzy e gere 13 indicadores prontos para análise e exportação em CSV.
           </p>
           <div class="hero-actions">
-            <a href="#demo" class="btn btn-primary" id="play-demo-cta" data-i18n="hero.ctaDemo">Assistir demonstração</a>
+            <a href="https://github.com/brunomartinsmv/periscope" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.13 0 1.54-.01 2.78-.01 3.16 0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+              <span data-i18n="hero.ctaGithub">Abrir no GitHub</span>
+            </a>
             <a href="#install" class="btn btn-outline" data-i18n="hero.ctaInstall">Instalar com Docker</a>
           </div>
         </div>
@@ -1079,7 +1077,7 @@ cp periscope-web/target/periscope.war \
         'nav.install': 'Instalação',
         'hero.title': 'Inteligência de patentes para prospecção tecnológica.',
         'hero.lead': 'Reúna bases Espacenet, Patentscope e DPMA em projetos compartilhados, unifique nomes de depositantes e inventores com busca fuzzy e gere 13 indicadores prontos para análise e exportação em CSV.',
-        'hero.ctaDemo': 'Assistir demonstração',
+        'hero.ctaGithub': 'Abrir no GitHub',
         'hero.ctaInstall': 'Instalar com Docker',
         'ch.intro': 'Abertura',
         'ch.login': 'Login e projetos',
@@ -1132,7 +1130,7 @@ cp periscope-web/target/periscope.war \
         'nav.install': 'Install',
         'hero.title': 'Patent intelligence for technological prospecting.',
         'hero.lead': 'Bring Espacenet, Patentscope, and DPMA datasets into shared projects, unify applicant and inventor names with fuzzy matching, and generate 13 interactive indicators ready for CSV export.',
-        'hero.ctaDemo': 'Watch demo',
+        'hero.ctaGithub': 'Open on GitHub',
         'hero.ctaInstall': 'Install with Docker',
         'ch.intro': 'Opening',
         'ch.login': 'Sign in and projects',
@@ -1193,13 +1191,9 @@ cp periscope-web/target/periscope.war \
     document.getElementById('btn-pt').addEventListener('click', () => setLang('pt-BR'));
     document.getElementById('btn-en').addEventListener('click', () => setLang('en-US'));
 
-    // Video chapters and CTA play
+    // Video chapters
     const video = document.getElementById('demo-video');
     const chapterBtns = Array.from(document.querySelectorAll('.chapter-btn'));
-
-    document.getElementById('play-demo-cta').addEventListener('click', () => {
-      video.play().catch(() => {});
-    });
 
     chapterBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
