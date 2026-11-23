@@ -2,7 +2,7 @@
 
 Plataforma web da **Universidade Federal de Mato Grosso (UFMT)** para prospecção tecnológica, análise e harmonização de patentes. Reúne exportações de múltiplas bases em projetos compartilhados, unifica grafias divergentes de depositantes e inventores com busca fuzzy em **Apache Lucene 9** e gera **13 indicadores interativos** prontos para análise e exportação em CSV.
 
-**[Acessar apresentação e vídeo 1440p 60fps](https://brunomartinsmv.github.io/periscope/)** · **[Documentação da API (OpenAPI)](#api-rest)** · **[Início rápido com Docker](#início-rápido-com-docker)**
+**[Documentação da API (OpenAPI)](#api-rest)** · **[Início rápido com Docker](#início-rápido-com-docker)**
 
 [![Prévia da tela de relatórios do Periscope](docs/assets/periscope-demo-poster.png)](https://brunomartinsmv.github.io/periscope/)
 
@@ -176,6 +176,7 @@ npm run test:e2e
 Workflows configurados em [`.github/workflows/`](.github/workflows):
 
 - [`ci.yml`](.github/workflows/ci.yml): build e testes unitários Maven, integração com Testcontainers, lint/testes/build do frontend, análise OWASP Dependency-Check e suíte E2E Playwright contra containers Docker reais.
+- [`release.yml`](.github/workflows/release.yml): a cada tag `v*`, publica a imagem Docker em `ghcr.io/brunomartinsmv/periscope` (GitHub Packages) e anexa `periscope-<versão>.war` + `SHA256SUMS.txt` à Release.
 - [`pages.yml`](.github/workflows/pages.yml): publicação automática da página de apresentação (`docs/`) no GitHub Pages.
 - [`deploy-staging.yml`](.github/workflows/deploy-staging.yml): disparo manual para homologação com build de imagem, health check e smoke E2E.
 

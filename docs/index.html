@@ -337,35 +337,16 @@
     .chapter-rail {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       border-left: 1px solid var(--line-dark);
       padding-left: 24px;
-    }
-
-    .rail-header {
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--line-dark);
-      margin-bottom: 12px;
-    }
-
-    .rail-title {
-      font-size: 0.98rem;
-      font-weight: 600;
-      color: #FFFFFF;
-      margin-bottom: 4px;
-    }
-
-    .rail-meta {
-      font-size: 0.84rem;
-      color: #9BB3C9;
     }
 
     .chapter-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      flex: 1;
+      gap: 8px;
     }
 
     .chapter-btn {
@@ -409,15 +390,6 @@
       font-size: 0.78rem;
       font-variant-numeric: tabular-nums;
       color: #7DD3FC;
-    }
-
-    .rail-note {
-      margin-top: 16px;
-      padding-top: 14px;
-      border-top: 1px solid var(--line-dark);
-      font-size: 0.8rem;
-      color: #8BA4BC;
-      line-height: 1.5;
     }
 
     /* Section 1: Sequential 3-Step Workflow */
@@ -883,56 +855,45 @@
           </div>
         </div>
 
-        <aside class="chapter-rail">
-          <div>
-            <div class="rail-header">
-              <div class="rail-title" data-i18n="rail.title">Periscope em funcionamento</div>
-              <div class="rail-meta" data-i18n="rail.meta">Interface real em 1440p a 60 fps</div>
-            </div>
-
-            <ul class="chapter-list" id="chapters-bar">
-              <li>
-                <button type="button" class="chapter-btn active" data-time="0">
-                  <span class="chapter-time">0:00</span>
-                  <span data-i18n="ch.intro">Abertura</span>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="chapter-btn" data-time="2.88">
-                  <span class="chapter-time">0:03</span>
-                  <span data-i18n="ch.login">Login e projetos</span>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="chapter-btn" data-time="7.82">
-                  <span class="chapter-time">0:08</span>
-                  <span data-i18n="ch.patents">Patentes e anexos PDF</span>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="chapter-btn" data-time="15.13">
-                  <span class="chapter-time">0:15</span>
-                  <span data-i18n="ch.harm">Harmonização fuzzy</span>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="chapter-btn" data-time="25.77">
-                  <span class="chapter-time">0:26</span>
-                  <span data-i18n="ch.reports">13 relatórios e CSV</span>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="chapter-btn" data-time="39.28">
-                  <span class="chapter-time">0:39</span>
-                  <span data-i18n="ch.i18n">Idioma e usuários</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <p class="rail-note" data-i18n="rail.note">
-            Clique em qualquer etapa para avançar o vídeo diretamente para a tela correspondente.
-          </p>
+        <aside class="chapter-rail" aria-label="Capítulos da demonstração">
+          <ul class="chapter-list" id="chapters-bar">
+            <li>
+              <button type="button" class="chapter-btn active" data-time="0">
+                <span class="chapter-time">0:00</span>
+                <span data-i18n="ch.intro">Abertura</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="chapter-btn" data-time="2.88">
+                <span class="chapter-time">0:03</span>
+                <span data-i18n="ch.login">Login e projetos</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="chapter-btn" data-time="7.82">
+                <span class="chapter-time">0:08</span>
+                <span data-i18n="ch.patents">Patentes e anexos PDF</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="chapter-btn" data-time="15.13">
+                <span class="chapter-time">0:15</span>
+                <span data-i18n="ch.harm">Harmonização fuzzy</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="chapter-btn" data-time="25.77">
+                <span class="chapter-time">0:26</span>
+                <span data-i18n="ch.reports">13 relatórios e CSV</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="chapter-btn" data-time="39.28">
+                <span class="chapter-time">0:39</span>
+                <span data-i18n="ch.i18n">Idioma e usuários</span>
+              </button>
+            </li>
+          </ul>
         </aside>
       </div>
     </section>
@@ -972,9 +933,6 @@
       <div class="container split-ledger">
         <div class="ledger-intro">
           <h2 data-i18n="cap.title">Feito para pesquisadores, NITs e equipes de P&amp;D</h2>
-          <p data-i18n="cap.desc">
-            Cada tela cobre uma tarefa real do estudo patentário, da triagem inicial de documentos até a revisão colaborativa com observadores.
-          </p>
         </div>
 
         <div class="ledger-list">
@@ -1123,9 +1081,6 @@ cp periscope-web/target/periscope.war \
         'hero.lead': 'Reúna bases Espacenet, Patentscope e DPMA em projetos compartilhados, unifique nomes de depositantes e inventores com busca fuzzy e gere 13 indicadores prontos para análise e exportação em CSV.',
         'hero.ctaDemo': 'Assistir demonstração',
         'hero.ctaInstall': 'Instalar com Docker',
-        'rail.title': 'Periscope em funcionamento',
-        'rail.meta': 'Interface real em 1440p a 60 fps',
-        'rail.note': 'Clique em qualquer etapa para avançar o vídeo diretamente para a tela correspondente.',
         'ch.intro': 'Abertura',
         'ch.login': 'Login e projetos',
         'ch.patents': 'Patentes e anexos PDF',
@@ -1140,7 +1095,6 @@ cp periscope-web/target/periscope.war \
         's3.title': 'Explorar indicadores e exportar',
         's3.desc': 'Filtre por janela temporal, natureza do depositante e nível IPC ou CPC, inspecione os 13 gráficos e tabelas interativas e baixe os dados consolidados em CSV.',
         'cap.title': 'Feito para pesquisadores, NITs e equipes de P&D',
-        'cap.desc': 'Cada tela cobre uma tarefa real do estudo patentário, da triagem inicial de documentos até a revisão colaborativa com observadores.',
         'c1.title': '13 relatórios e exportação CSV',
         'c1.desc': 'Ranking de depositantes e inventores, séries temporais por depósito, publicação e prioridade, classificações IPC e CPC com descrição das seções, natureza jurídica, distribuição por estado e região no Brasil e tabela de prioridade nacional.',
         'c2.title': 'Harmonização reversível com Lucene 9',
@@ -1180,9 +1134,6 @@ cp periscope-web/target/periscope.war \
         'hero.lead': 'Bring Espacenet, Patentscope, and DPMA datasets into shared projects, unify applicant and inventor names with fuzzy matching, and generate 13 interactive indicators ready for CSV export.',
         'hero.ctaDemo': 'Watch demo',
         'hero.ctaInstall': 'Install with Docker',
-        'rail.title': 'Periscope in action',
-        'rail.meta': 'Live interface capture at 1440p, 60 fps',
-        'rail.note': 'Select any stage to jump straight to that screen in the walkthrough.',
         'ch.intro': 'Opening',
         'ch.login': 'Sign in and projects',
         'ch.patents': 'Patents and PDF attachments',
@@ -1197,7 +1148,6 @@ cp periscope-web/target/periscope.war \
         's3.title': 'Explore indicators and export',
         's3.desc': 'Filter by date range, applicant nature, and IPC or CPC level, inspect 13 interactive charts and tables, and download the consolidated results as CSV.',
         'cap.title': 'Built for researchers, tech-transfer offices, and R&D teams',
-        'cap.desc': 'Every screen maps to an actual patent-study task, from initial dataset triage through collaborative review with project observers.',
         'c1.title': '13 reports and CSV export',
         'c1.desc': 'Top applicants and inventors, filing, publication, and priority timelines, IPC and CPC rankings with section descriptions, legal nature breakdown, Brazilian state and region distribution, and national priority table.',
         'c2.title': 'Reversible harmonization with Lucene 9',

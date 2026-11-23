@@ -7,10 +7,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-Modernização **100% concluída**: backend Jakarta EE 10 / WildFly 34, paridade funcional
-completa da API REST e SPA React, empacotamento Docker multi-stage com SPA embarcada,
-descomissionamento integral do legado JSF/PrimeFaces, endurecimento de segurança para produção
-e suíte completa de testes e CI/CD.
+## [1.0.0] - 2026-11-23
+
+Primeira release estável do Periscope com backend Java 21 / Jakarta EE 10 / WildFly 34,
+interface React 19 + TypeScript embarcada, harmonização fuzzy em Apache Lucene 9, 13 relatórios
+interativos com exportação CSV, empacotamento Docker multi-stage (GHCR), segurança de produção e
+suíte automatizada de testes.
 
 ### Added
 

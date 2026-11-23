@@ -30,6 +30,11 @@ RUN mvn -B clean package -DskipTests
 # ---- Stage 3: runtime ----
 FROM quay.io/wildfly/wildfly:34.0.1.Final-jdk21
 
+LABEL org.opencontainers.image.title="Periscope" \
+      org.opencontainers.image.description="Plataforma web da UFMT para prospecção tecnológica, harmonização de patentes com Apache Lucene 9 e 13 relatórios interativos" \
+      org.opencontainers.image.source="https://github.com/brunomartinsmv/periscope" \
+      org.opencontainers.image.url="https://brunomartinsmv.github.io/periscope/"
+
 ENV MONGODB_URI=mongodb://mongodb:27017 \
     MONGODB_DATABASE=Periscope \
     PERISCOPE_DIR=/opt/periscope
